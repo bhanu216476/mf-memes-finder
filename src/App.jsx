@@ -121,16 +121,16 @@ function Logo() {
   )
 }
 
-function TopNavMobile() {
+function TopNavMobile({ user, onOpenLogin, onOpenUpload }) {
   return (
     <header className="flex items-center justify-between px-4 py-3 bg-gradient-to-b from-[#141414] to-[#0b0b0b] border-b border-transparent">
       <Logo />
       <div className="flex items-center gap-2">
-        <button aria-label="upload" className="p-2 rounded-md bg-[#E50914] text-white text-xs font-semibold">
+        <button aria-label="upload" onClick={onOpenUpload} className="p-2 rounded-md bg-[#E50914] text-white text-xs font-semibold">
           Upload
         </button>
-        <button aria-label="profile" className="p-2 rounded-full border border-gray-700 text-gray-200">
-          👤
+        <button aria-label="profile" onClick={onOpenLogin} className="p-2 rounded-full border border-gray-700 text-gray-200 flex items-center justify-center min-w-[32px] h-[32px]">
+          {user ? <span className="text-xs font-bold text-[#E50914]">{user.username.charAt(0).toUpperCase()}</span> : '👤'}
         </button>
       </div>
     </header>
@@ -485,6 +485,15 @@ function DownloadsSheet({ open, onClose }) {
 }
 
 function AudioGridPage({ audio, onBack }) {
+  const [audiosList, setAudiosList] = useState([])
+
+  useEffect(() => {
+    fetch('/api/audio?packId=' + audio.id)
+      .then(res => res.json())
+      .then(data => setAudiosList(data))
+      .catch(err => console.error(err))
+  }, [audio])
+
   const slots = Array.from({ length: 12 })
 
   return (
@@ -522,7 +531,9 @@ function AudioGridPage({ audio, onBack }) {
 
       {/* Audio list wireframe (rows) */}
       <div className="mt-2 space-y-3">
-        {slots.map((_, index) => (
+        {slots.map((_, index) => {
+          const track = audiosList[index];
+          return (
           <motion.div
             key={index}
             whileHover={{ scale: 1.01, y: -1 }}
@@ -537,10 +548,10 @@ function AudioGridPage({ audio, onBack }) {
             {/* middle: title + duration */}
             <div className="flex-1 min-w-0">
               <div className="text-xs font-semibold text-gray-100 truncate">
-                {`0${index + 1} - Audio Clip Name ..`}
+                {track ? track.title : `0${index + 1} - Audio Clip Name ..`}
               </div>
               <div className="text-[10px] text-cyan-300 mt-0.5">
-                0{index}:{index === 0 ? '27' : '3' + index}
+                {track ? track.duration : `0${index}:${index === 0 ? '27' : '3' + index}`}
               </div>
             </div>
 
@@ -552,13 +563,22 @@ function AudioGridPage({ audio, onBack }) {
               ⬇
             </button>
           </motion.div>
-        ))}
+        )})}
       </div>
     </div>
   )
 }
 
 function CategoryGridPage({ category, onBack }) {
+  const [templates, setTemplates] = useState([])
+
+  useEffect(() => {
+    fetch('/api/templates?categoryId=' + category.id)
+      .then(res => res.json())
+      .then(data => setTemplates(data))
+      .catch(err => console.error(err))
+  }, [category])
+
   const slots = Array.from({ length: 12 })
 
   return (
@@ -596,7 +616,9 @@ function CategoryGridPage({ category, onBack }) {
 
       {/* 3-column grid with empty placeholders */}
       <div className="grid grid-cols-3 gap-3">
-        {slots.map((_, index) => (
+        {slots.map((_, index) => {
+          const tmpl = templates[index];
+          return (
           <motion.button
             key={index}
             type="button"
@@ -605,44 +627,66 @@ function CategoryGridPage({ category, onBack }) {
             transition={{ type: 'spring', stiffness: 260, damping: 20 }}
             className="flex flex-col gap-1"
           >
-            <div className="w-full h-32 rounded-xl bg-gradient-to-b from-[#1f2937] to-[#020617] border border-gray-700/70 shadow-[0_18px_38px_rgba(0,0,0,0.85)] overflow-hidden flex items-center justify-center">
-              <motion.div
-                className="w-10 h-10 rounded-full border border-gray-500/60 flex items-center justify-center text-xs text-gray-300 bg-black/40"
-                animate={{
-                  scale: [1, 1.08, 1],
-                  boxShadow: [
-                    '0 0 0 rgba(0,0,0,0)',
-                    '0 0 18px rgba(148,163,184,0.7)',
-                    '0 0 0 rgba(0,0,0,0)',
-                  ],
-                }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: index * 0.05 }}
-              >
-                +
-              </motion.div>
+            <div className="w-full h-32 rounded-xl bg-gradient-to-b from-[#1f2937] to-[#020617] border border-gray-700/70 shadow-[0_18px_38px_rgba(0,0,0,0.85)] overflow-hidden flex items-center justify-center relative">
+              {tmpl ? (
+                <img src={tmpl.imgSrc} alt={tmpl.title} className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                <motion.div
+                  className="w-10 h-10 rounded-full border border-gray-500/60 flex items-center justify-center text-xs text-gray-300 bg-black/40"
+                  animate={{
+                    scale: [1, 1.08, 1],
+                    boxShadow: [
+                      '0 0 0 rgba(0,0,0,0)',
+                      '0 0 18px rgba(148,163,184,0.7)',
+                      '0 0 0 rgba(0,0,0,0)',
+                    ],
+                  }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: index * 0.05 }}
+                >
+                  +
+                </motion.div>
+              )}
             </div>
-            <div className="text-[10px] text-gray-300 font-medium truncate">Empty Slot</div>
-            <div className="text-[9px] text-gray-500 truncate">Tap to attach a clip</div>
+            <div className="text-[10px] text-gray-300 font-medium truncate">{tmpl ? tmpl.title : 'Empty Slot'}</div>
+            <div className="text-[9px] text-gray-500 truncate">{tmpl ? 'Tap to view' : 'Tap to attach a clip'}</div>
           </motion.button>
-        ))}
+        )})}
       </div>
     </div>
   )
 }
 
-function ChatScreen() {
-  const messages = [
-    {
-      id: 1,
-      from: 'admin',
-      text: 'Tell me which actor / scene you need, I will add that template pack.',
-    },
-    {
-      id: 2,
-      from: 'user',
-      text: 'Need more Sunil temple comedy templates 🙏',
-    },
-  ]
+function ChatScreen({ user, onRequireLogin }) {
+  const [messages, setMessages] = useState([])
+  const [inputText, setInputText] = useState('')
+
+  useEffect(() => {
+    fetch('/api/chat')
+      .then(res => res.json())
+      .then(data => setMessages(data))
+      .catch(err => console.error(err))
+  }, [])
+
+  const handleSend = async () => {
+    if (!inputText.trim()) return;
+    if (!user) {
+      onRequireLogin();
+      return;
+    }
+    const newMsg = { from: 'user', text: inputText, userId: user.id }
+    setMessages(prev => [...prev, { _id: Date.now().toString(), ...newMsg }])
+    setInputText('')
+    
+    try {
+      await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMsg)
+      })
+    } catch(err) {
+      console.error(err)
+    }
+  }
 
   return (
     <div className="px-4 pt-4 pb-4 flex flex-col min-h-[520px]">
@@ -660,7 +704,7 @@ function ChatScreen() {
       <div className="flex-1 overflow-y-auto space-y-3 pr-1 pb-2">
         {messages.map((msg) => (
           <div
-            key={msg.id}
+            key={msg._id || msg.id}
             className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
@@ -674,10 +718,6 @@ function ChatScreen() {
             </div>
           </div>
         ))}
-
-        <div className="mt-2 text-[10px] text-gray-500 text-center">
-          This is a UI preview. Later you can plug real chat API here.
-        </div>
       </div>
 
       {/* Message bar */}
@@ -689,10 +729,14 @@ function ChatScreen() {
           +
         </button>
         <input
+          value={inputText}
+          onChange={e => setInputText(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleSend()}
           className="flex-1 bg-transparent outline-none text-[12px] text-gray-100 placeholder-gray-500"
-          placeholder="Ask admin: e.g. ‘Need Brahmi courtroom reaction template’"
+          placeholder="Ask admin: e.g. ‘Need Brahmi reaction template’"
         />
         <motion.button
+          onClick={handleSend}
           whileHover={{ scale: 1.05, x: 1 }}
           whileTap={{ scale: 0.94 }}
           type="button"
@@ -829,13 +873,106 @@ function StaticFooter() {
   )
 }
 
+function LoginModal({ isOpen, onClose, onLogin }) {
+  const [isRegister, setIsRegister] = useState(false)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [age, setAge] = useState('')
+  const [gender, setGender] = useState('')
+
+  if (!isOpen) return null
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login'
+    const payload = isRegister ? { username, password, age, gender } : { username, password }
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      const data = await res.json()
+      if (res.ok) {
+        localStorage.setItem('token', data.token)
+        onLogin(data.user)
+        onClose()
+      } else {
+        alert(data.message || 'Error')
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-[320px] bg-[#141414] border border-gray-800 rounded-2xl p-6 shadow-2xl relative"
+      >
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+        <h2 className="text-xl font-bold text-white mb-6 text-center">
+          {isRegister ? 'Create Account' : 'Sign In'}
+        </h2>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <input 
+            type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required
+            className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#E50914]"
+          />
+          <input 
+            type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required
+            className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#E50914]"
+          />
+          
+          {isRegister && (
+            <>
+              <input 
+                type="number" placeholder="Age (optional)" value={age} onChange={e => setAge(e.target.value)}
+                className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#E50914]"
+              />
+              <select 
+                value={gender} onChange={e => setGender(e.target.value)}
+                className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-400 outline-none focus:border-[#E50914] appearance-none"
+              >
+                <option value="">Gender (optional)</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </>
+          )}
+
+          <button type="submit" className="w-full bg-[#E50914] text-white font-semibold rounded-xl py-3 mt-2 hover:bg-[#f97316] transition-colors">
+            {isRegister ? 'Sign Up' : 'Sign In'}
+          </button>
+        </form>
+        <p className="text-xs text-gray-500 text-center mt-6">
+          {isRegister ? 'Already have an account? ' : 'New to Memes Finder? '}
+          <button type="button" onClick={() => setIsRegister(!isRegister)} className="text-white hover:underline">
+            {isRegister ? 'Sign In' : 'Sign Up now.'}
+          </button>
+        </p>
+      </motion.div>
+    </div>
+  )
+}
+
 export default function DemoMobile() {
   // screen: which main view is active inside the phone frame
   const [screen, setScreen] = useState('home') // 'home' | 'categories' | 'categoryGrid' | 'chat' | 'saved' | 'audioGrid'
   const [activeGridCategory, setActiveGridCategory] = useState(null)
   const [activeAudioClip, setActiveAudioClip] = useState(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [user, setUser] = useState(null)
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
 
+  // Initialize with dummy data arrays if needed, but we keep the global ones for now
+  
   const handleSelectCategory = (cat) => {
     setActiveGridCategory(cat)
     setScreen('categoryGrid')
@@ -888,7 +1025,7 @@ export default function DemoMobile() {
         style={{ backdropFilter: 'saturate(120%) blur(6px)' }}
       >
         <div className="bg-transparent">
-          <TopNavMobile />
+          <TopNavMobile user={user} onOpenLogin={() => setIsLoginModalOpen(true)} onOpenUpload={() => setIsUploadModalOpen(true)} />
           {showSearchBar && <SearchBarMobile />}
 
           {screen === 'home' && (
@@ -960,7 +1097,7 @@ export default function DemoMobile() {
             />
           )}
 
-          {screen === 'chat' && <ChatScreen />}
+          {screen === 'chat' && <ChatScreen user={user} onRequireLogin={() => setIsLoginModalOpen(true)} />}
 
           {screen === 'saved' && (
             <SavedPage onBack={() => setScreen('home')} />
@@ -977,6 +1114,80 @@ export default function DemoMobile() {
       />
 
       <DownloadsSheet open={isSheetOpen} onClose={() => setIsSheetOpen(false)} />
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onLogin={setUser} />
+      <UploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} />
+    </div>
+  )
+}
+
+function UploadModal({ isOpen, onClose }) {
+  const [title, setTitle] = useState('')
+  const [categoryId, setCategoryId] = useState('sunil')
+  const [imgSrc, setImgSrc] = useState('')
+
+  if (!isOpen) return null
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      const res = await fetch('/api/templates/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, categoryId, imgSrc })
+      })
+      if (res.ok) {
+        alert('Template uploaded successfully via URL!')
+        onClose()
+        setTitle('')
+        setImgSrc('')
+      } else {
+        const data = await res.json()
+        alert(data.message || 'Error uploading')
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-[320px] bg-[#141414] border border-gray-800 rounded-2xl p-6 shadow-2xl relative"
+      >
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+        <h2 className="text-xl font-bold text-white mb-6 text-center">Add Template</h2>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <input 
+            type="text" placeholder="Template Title" value={title} onChange={e => setTitle(e.target.value)} required
+            className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#E50914]"
+          />
+          <select 
+            value={categoryId} onChange={e => setCategoryId(e.target.value)}
+            className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#E50914] appearance-none"
+          >
+            <option value="sunil">Sunil</option>
+            <option value="brahmi">Brahmi</option>
+            <option value="ali">Ali</option>
+            <option value="mohanlal">Mohanlal</option>
+            <option value="vk">VK</option>
+            <option value="satya">Satya</option>
+          </select>
+          <input 
+            type="url" placeholder="Image URL (e.g. https://...)" value={imgSrc} onChange={e => setImgSrc(e.target.value)} required
+            className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#E50914]"
+          />
+          {imgSrc && (
+            <div className="w-full h-24 rounded-lg overflow-hidden border border-gray-700">
+              <img src={imgSrc} alt="Preview" className="w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} />
+            </div>
+          )}
+          <button type="submit" className="w-full bg-[#E50914] text-white font-semibold rounded-xl py-3 mt-2 hover:bg-[#f97316] transition-colors">
+            Upload Template
+          </button>
+        </form>
+      </motion.div>
     </div>
   )
 }
