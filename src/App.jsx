@@ -522,7 +522,7 @@ function AudioGridPage({ audio, onBack }) {
   const [audiosList, setAudiosList] = useState([])
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL || ''}/api/audio?packId=` + audio.id)
+    fetch(`https://mf-memes-finder-backend.onrender.com/api/audio?packId=` + audio.id)
       .then(res => res.json())
       .then(data => setAudiosList(data))
       .catch(err => console.error(err))
@@ -607,7 +607,7 @@ function CategoryGridPage({ category, onBack }) {
   const [templates, setTemplates] = useState([])
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL || ''}/api/templates?categoryId=` + category.id)
+    fetch(`https://mf-memes-finder-backend.onrender.com/api/templates?categoryId=` + category.id)
       .then(res => res.json())
       .then(data => setTemplates(data))
       .catch(err => console.error(err))
@@ -695,7 +695,7 @@ function ChatScreen({ user, onRequireLogin }) {
   const [inputText, setInputText] = useState('')
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL || ''}/api/chat`)
+    fetch(`https://mf-memes-finder-backend.onrender.com/api/chat`)
       .then(res => res.json())
       .then(data => setMessages(data))
       .catch(err => console.error(err))
@@ -712,7 +712,7 @@ function ChatScreen({ user, onRequireLogin }) {
     setInputText('')
     
     try {
-      await fetch(`${import.meta.env.VITE_API_URL || ''}/api/chat`, {
+      await fetch(`https://mf-memes-finder-backend.onrender.com/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newMsg)
@@ -922,7 +922,7 @@ function LoginModal({ isOpen, onClose, onLogin }) {
     const payload = isRegister ? { username, password, age, gender } : { username, password }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}${endpoint}`, {
+      const res = await fetch(`https://mf-memes-finder-backend.onrender.com${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -1184,7 +1184,7 @@ function UploadModal({ isOpen, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/templates/upload`, {
+      const res = await fetch(`https://mf-memes-finder-backend.onrender.com/api/templates/upload`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, categoryId, imgSrc })
