@@ -404,6 +404,40 @@ function SavedCard({ icon, title, accent }) {
   )
 }
 
+function ProfilePage({ user, onLogout }) {
+  if (!user) {
+    return (
+      <div className="px-4 py-20 flex flex-col items-center text-center">
+        <div className="text-4xl mb-4">👤</div>
+        <h2 className="text-xl font-bold text-white mb-2">Not Signed In</h2>
+        <p className="text-sm text-gray-400 mb-6">Sign in to save templates and chat with admin.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="px-4 pt-4 pb-6 min-h-[500px]">
+      <h2 className="text-lg font-bold text-white mb-6">Your Profile</h2>
+      <div className="bg-[#141414] border border-gray-800 rounded-2xl p-6 mb-6 flex items-center gap-4">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#E50914] to-[#fde68a] flex items-center justify-center text-2xl font-bold text-white">
+          {user.username.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <div className="text-lg font-bold text-white">{user.username}</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider">Member</div>
+        </div>
+      </div>
+      
+      <button 
+        onClick={onLogout}
+        className="w-full bg-gray-800 text-white font-semibold rounded-xl py-4 hover:bg-red-900/40 transition-colors border border-gray-700"
+      >
+        Log Out
+      </button>
+    </div>
+  )
+}
+
 function DownloadsSheet({ open, onClose }) {
   return (
     <AnimatePresence>
@@ -896,6 +930,7 @@ function LoginModal({ isOpen, onClose, onLogin }) {
       const data = await res.json()
       if (res.ok) {
         localStorage.setItem('token', data.token)
+        localStorage.setItem('user', JSON.stringify(data.user))
         onLogin(data.user)
         onClose()
       } else {
@@ -970,6 +1005,13 @@ export default function DemoMobile() {
   const [user, setUser] = useState(null)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user')
+    if (savedUser) {
+      setUser(JSON.parse(savedUser))
+    }
+  }, [])
 
   // Initialize with dummy data arrays if needed, but we keep the global ones for now
   
@@ -1101,6 +1143,18 @@ export default function DemoMobile() {
 
           {screen === 'saved' && (
             <SavedPage onBack={() => setScreen('home')} />
+          )}
+
+          {screen === 'profile' && (
+            <ProfilePage 
+              user={user} 
+              onLogout={() => {
+                localStorage.removeItem('token')
+                localStorage.removeItem('user')
+                setUser(null)
+                setScreen('home')
+              }} 
+            />
           )}
           
           <StaticFooter />
