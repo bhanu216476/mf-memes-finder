@@ -22,8 +22,6 @@ app.use('/api/audio', require('./routes/audio'));
 app.use('/api/chat', require('./routes/chat'));
 
 const PORT = process.env.PORT || 5000;
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => console.log(`Backend server running on port ${PORT}`));
-}
+app.listen(PORT, () => console.log(`Backend server running on port ${PORT}`));
 
 module.exports = app;

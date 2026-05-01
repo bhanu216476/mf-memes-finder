@@ -488,7 +488,7 @@ function AudioGridPage({ audio, onBack }) {
   const [audiosList, setAudiosList] = useState([])
 
   useEffect(() => {
-    fetch('/api/audio?packId=' + audio.id)
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/audio?packId=` + audio.id)
       .then(res => res.json())
       .then(data => setAudiosList(data))
       .catch(err => console.error(err))
@@ -573,7 +573,7 @@ function CategoryGridPage({ category, onBack }) {
   const [templates, setTemplates] = useState([])
 
   useEffect(() => {
-    fetch('/api/templates?categoryId=' + category.id)
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/templates?categoryId=` + category.id)
       .then(res => res.json())
       .then(data => setTemplates(data))
       .catch(err => console.error(err))
@@ -661,7 +661,7 @@ function ChatScreen({ user, onRequireLogin }) {
   const [inputText, setInputText] = useState('')
 
   useEffect(() => {
-    fetch('/api/chat')
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/chat`)
       .then(res => res.json())
       .then(data => setMessages(data))
       .catch(err => console.error(err))
@@ -678,7 +678,7 @@ function ChatScreen({ user, onRequireLogin }) {
     setInputText('')
     
     try {
-      await fetch('/api/chat', {
+      await fetch(`${import.meta.env.VITE_API_URL || ''}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newMsg)
@@ -888,7 +888,7 @@ function LoginModal({ isOpen, onClose, onLogin }) {
     const payload = isRegister ? { username, password, age, gender } : { username, password }
 
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -1130,7 +1130,7 @@ function UploadModal({ isOpen, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const res = await fetch('/api/templates/upload', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/templates/upload`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, categoryId, imgSrc })
