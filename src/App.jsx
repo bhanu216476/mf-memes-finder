@@ -910,7 +910,7 @@ function StaticFooter() {
       <p className="text-[10px] text-gray-500 max-w-[280px] mt-2 leading-relaxed">
         Memes Finder App • Your ultimate destination for viral templates, audio clips, and trend-setting edits.
       </p>
-      <p className="text-[9px] text-gray-700 mt-1">v1.0.5 - Connected to Render</p>
+      <p className="text-[9px] text-gray-700 mt-1">v1.0.7 - Fast Login Ready</p>
       <div className="flex gap-4 mt-3 text-[10px] font-medium text-gray-400">
         <button className="hover:text-white transition-colors">Privacy Policy</button>
         <button className="hover:text-white transition-colors">Terms</button>
@@ -927,8 +927,6 @@ function LoginModal({ isOpen, onClose, onLogin, initialIsRegister = false }) {
   const [isRegister, setIsRegister] = useState(initialIsRegister)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [age, setAge] = useState('')
-  const [gender, setGender] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -941,7 +939,7 @@ function LoginModal({ isOpen, onClose, onLogin, initialIsRegister = false }) {
     e.preventDefault()
     setIsLoading(true)
     const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login'
-    const payload = isRegister ? { username, password, age, gender } : { username, password }
+    const payload = { username, password }
     const fullUrl = `https://mf-memes-finder-backend.onrender.com${endpoint}`
 
     console.log(`Auth attempt: ${isRegister ? 'REGISTER' : 'LOGIN'} to ${fullUrl}`)
@@ -991,25 +989,6 @@ function LoginModal({ isOpen, onClose, onLogin, initialIsRegister = false }) {
             type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required
             className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#E50914]"
           />
-          
-          {isRegister && (
-            <>
-              <input 
-                type="number" placeholder="Age (optional)" value={age} onChange={e => setAge(e.target.value)}
-                className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#E50914]"
-              />
-              <select 
-                value={gender} onChange={e => setGender(e.target.value)}
-                className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-400 outline-none focus:border-[#E50914] appearance-none"
-              >
-                <option value="">Gender (optional)</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-                <option value="Prefer not to say">Prefer not to say</option>
-              </select>
-            </>
-          )}
 
           <button 
             type="submit" 

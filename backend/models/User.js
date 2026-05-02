@@ -10,15 +10,6 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  age: {
-    type: Number,
-    required: false
-  },
-  gender: {
-    type: String,
-    enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
-    required: false
-  },
   savedTemplates: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Template'
