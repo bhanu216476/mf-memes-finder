@@ -910,6 +910,7 @@ function StaticFooter() {
       <p className="text-[10px] text-gray-500 max-w-[280px] mt-2 leading-relaxed">
         Memes Finder App • Your ultimate destination for viral templates, audio clips, and trend-setting edits.
       </p>
+      <p className="text-[9px] text-gray-700 mt-1">v1.0.5 - Connected to Render</p>
       <div className="flex gap-4 mt-3 text-[10px] font-medium text-gray-400">
         <button className="hover:text-white transition-colors">Privacy Policy</button>
         <button className="hover:text-white transition-colors">Terms</button>
@@ -928,6 +929,7 @@ function LoginModal({ isOpen, onClose, onLogin, initialIsRegister = false }) {
   const [password, setPassword] = useState('')
   const [age, setAge] = useState('')
   const [gender, setGender] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     setIsRegister(initialIsRegister)
@@ -937,12 +939,12 @@ function LoginModal({ isOpen, onClose, onLogin, initialIsRegister = false }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setIsLoading(true)
     const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login'
     const payload = isRegister ? { username, password, age, gender } : { username, password }
     const fullUrl = `https://mf-memes-finder-backend.onrender.com${endpoint}`
 
     console.log(`Auth attempt: ${isRegister ? 'REGISTER' : 'LOGIN'} to ${fullUrl}`)
-    console.log('Payload:', { ...payload, password: '***' })
 
     try {
       const res = await fetch(fullUrl, {
@@ -951,21 +953,21 @@ function LoginModal({ isOpen, onClose, onLogin, initialIsRegister = false }) {
         body: JSON.stringify(payload)
       })
       const data = await res.json()
-      console.log('Auth response status:', res.status)
-      console.log('Auth response data:', data)
 
       if (res.ok) {
         localStorage.setItem('token', data.token)
         localStorage.setItem('user', JSON.stringify(data.user))
         onLogin(data.user)
         onClose()
-        alert(isRegister ? 'Registration successful!' : 'Login successful!')
+        alert(isRegister ? 'Welcome! Your account is ready.' : 'Welcome back!')
       } else {
-        alert(data.message || 'Error')
+        alert(data.message || 'Authentication failed. Please check your credentials.')
       }
     } catch (err) {
-      console.error('Auth fetch error:', err)
-      alert('Could not connect to server. Please try again.')
+      console.error('Auth error:', err)
+      alert('Network error. Please check your internet connection and try again.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -1009,14 +1011,20 @@ function LoginModal({ isOpen, onClose, onLogin, initialIsRegister = false }) {
             </>
           )}
 
-          <button type="submit" className="w-full bg-[#E50914] text-white font-semibold rounded-xl py-3 mt-2 hover:bg-[#f97316] transition-colors">
-            {isRegister ? 'Sign Up' : 'Sign In'}
+          <button 
+            type="submit" 
+            disabled={isLoading}
+            className={`w-full text-white font-bold rounded-xl py-4 mt-2 transition-all shadow-lg ${
+              isLoading ? 'bg-gray-700 cursor-not-allowed' : 'bg-[#E50914] hover:bg-[#f97316] hover:scale-[1.02]'
+            }`}
+          >
+            {isLoading ? 'Processing...' : (isRegister ? 'Create My Account' : 'Sign In Now')}
           </button>
         </form>
         <p className="text-xs text-gray-500 text-center mt-6">
-          {isRegister ? 'Already have an account? ' : 'New to Memes Finder? '}
-          <button type="button" onClick={() => setIsRegister(!isRegister)} className="text-white hover:underline">
-            {isRegister ? 'Sign In' : 'Sign Up now.'}
+          {isRegister ? 'Already a member? ' : 'New to Memes Finder? '}
+          <button type="button" onClick={() => setIsRegister(!isRegister)} className="text-white font-bold hover:underline">
+            {isRegister ? 'Log In' : 'Sign Up for Free'}
           </button>
         </p>
       </motion.div>

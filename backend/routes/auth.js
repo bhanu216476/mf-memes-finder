@@ -17,14 +17,16 @@ router.post('/register', async (req, res) => {
 
     user = new User({ username, password: hashedPassword, age, gender });
     await user.save();
+    console.log(`New user registered: ${username}`);
 
     const payload = { user: { id: user.id } };
-    jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: 360000 }, (err, token) => {
+    jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' }, (err, token) => {
       if (err) throw err;
       res.json({ token, user: { id: user.id, username: user.username } });
     });
   } catch (err) {
-    res.status(500).send('Server error');
+    console.error('Registration error:', err.message);
+    res.status(500).json({ message: 'Server error during registration' });
   }
 });
 
@@ -43,12 +45,13 @@ router.post('/login', async (req, res) => {
     }
 
     const payload = { user: { id: user.id } };
-    jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: 360000 }, (err, token) => {
+    jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' }, (err, token) => {
       if (err) throw err;
       res.json({ token, user: { id: user.id, username: user.username } });
     });
   } catch (err) {
-    res.status(500).send('Server error');
+    console.error('Login error:', err.message);
+    res.status(500).json({ message: 'Server error during login' });
   }
 });
 
