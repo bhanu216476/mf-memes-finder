@@ -910,7 +910,7 @@ function StaticFooter() {
       <p className="text-[10px] text-gray-500 max-w-[280px] mt-2 leading-relaxed">
         Memes Finder App • Your ultimate destination for viral templates, audio clips, and trend-setting edits.
       </p>
-      <p className="text-[9px] text-gray-700 mt-1">v1.0.7 - Fast Login Ready</p>
+      <p className="text-[9px] text-gray-700 mt-1">v1.0.8 - Gender Removed & Final Fix</p>
       <div className="flex gap-4 mt-3 text-[10px] font-medium text-gray-400">
         <button className="hover:text-white transition-colors">Privacy Policy</button>
         <button className="hover:text-white transition-colors">Terms</button>
