@@ -121,16 +121,31 @@ function Logo() {
   )
 }
 
-function TopNavMobile({ user, onOpenLogin, onOpenUpload }) {
+function TopNavMobile({ user, onOpenLogin, onOpenSignup, onOpenUpload }) {
   return (
     <header className="flex items-center justify-between px-4 py-3 bg-gradient-to-b from-[#141414] to-[#0b0b0b] border-b border-transparent">
       <Logo />
       <div className="flex items-center gap-2">
+        {!user && (
+          <button 
+            onClick={onOpenSignup} 
+            className="px-3 py-2 rounded-md bg-transparent border border-gray-700 text-white text-xs font-semibold hover:bg-gray-800"
+          >
+            Sign Up
+          </button>
+        )}
+        <button 
+          onClick={onOpenLogin} 
+          className="p-2 rounded-full border border-gray-700 text-gray-200 flex items-center justify-center min-w-[32px] h-[32px] overflow-hidden"
+        >
+          {user ? (
+            <span className="text-xs font-bold text-[#E50914]">{user.username.charAt(0).toUpperCase()}</span>
+          ) : (
+            '👤'
+          )}
+        </button>
         <button aria-label="upload" onClick={onOpenUpload} className="p-2 rounded-md bg-[#E50914] text-white text-xs font-semibold">
           Upload
-        </button>
-        <button aria-label="profile" onClick={onOpenLogin} className="p-2 rounded-full border border-gray-700 text-gray-200 flex items-center justify-center min-w-[32px] h-[32px]">
-          {user ? <span className="text-xs font-bold text-[#E50914]">{user.username.charAt(0).toUpperCase()}</span> : '👤'}
         </button>
       </div>
     </header>
@@ -907,12 +922,16 @@ function StaticFooter() {
   )
 }
 
-function LoginModal({ isOpen, onClose, onLogin }) {
-  const [isRegister, setIsRegister] = useState(false)
+function LoginModal({ isOpen, onClose, onLogin, initialIsRegister = false }) {
+  const [isRegister, setIsRegister] = useState(initialIsRegister)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [age, setAge] = useState('')
   const [gender, setGender] = useState('')
+
+  useEffect(() => {
+    setIsRegister(initialIsRegister)
+  }, [initialIsRegister, isOpen])
 
   if (!isOpen) return null
 
@@ -920,24 +939,33 @@ function LoginModal({ isOpen, onClose, onLogin }) {
     e.preventDefault()
     const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login'
     const payload = isRegister ? { username, password, age, gender } : { username, password }
+    const fullUrl = `https://mf-memes-finder-backend.onrender.com${endpoint}`
+
+    console.log(`Auth attempt: ${isRegister ? 'REGISTER' : 'LOGIN'} to ${fullUrl}`)
+    console.log('Payload:', { ...payload, password: '***' })
 
     try {
-      const res = await fetch(`https://mf-memes-finder-backend.onrender.com${endpoint}`, {
+      const res = await fetch(fullUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
       const data = await res.json()
+      console.log('Auth response status:', res.status)
+      console.log('Auth response data:', data)
+
       if (res.ok) {
         localStorage.setItem('token', data.token)
         localStorage.setItem('user', JSON.stringify(data.user))
         onLogin(data.user)
         onClose()
+        alert(isRegister ? 'Registration successful!' : 'Login successful!')
       } else {
         alert(data.message || 'Error')
       }
     } catch (err) {
-      console.error(err)
+      console.error('Auth fetch error:', err)
+      alert('Could not connect to server. Please try again.')
     }
   }
 
@@ -1004,6 +1032,7 @@ export default function DemoMobile() {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [user, setUser] = useState(null)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [loginModalMode, setLoginModalMode] = useState(false) // false for login, true for signup
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
 
   useEffect(() => {
@@ -1067,7 +1096,12 @@ export default function DemoMobile() {
         style={{ backdropFilter: 'saturate(120%) blur(6px)' }}
       >
         <div className="bg-transparent">
-          <TopNavMobile user={user} onOpenLogin={() => setIsLoginModalOpen(true)} onOpenUpload={() => setIsUploadModalOpen(true)} />
+          <TopNavMobile 
+            user={user} 
+            onOpenLogin={() => { setLoginModalMode(false); setIsLoginModalOpen(true); }} 
+            onOpenSignup={() => { setLoginModalMode(true); setIsLoginModalOpen(true); }}
+            onOpenUpload={() => setIsUploadModalOpen(true)} 
+          />
           {showSearchBar && <SearchBarMobile />}
 
           {screen === 'home' && (
@@ -1168,7 +1202,12 @@ export default function DemoMobile() {
       />
 
       <DownloadsSheet open={isSheetOpen} onClose={() => setIsSheetOpen(false)} />
-      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onLogin={setUser} />
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)} 
+        onLogin={setUser} 
+        initialIsRegister={loginModalMode}
+      />
       <UploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} />
     </div>
   )
