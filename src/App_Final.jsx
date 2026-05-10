@@ -37,86 +37,45 @@ const AUDIO_CLIPS = [
 function Logo() {
   return (
     <motion.div
-      className="flex items-center gap-3"
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
+      className="flex flex-col items-center"
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="relative">
-        {/* Glow behind logo */}
+      <div className="flex flex-col items-center gap-0.5">
         <motion.div
-          className="absolute -inset-0.5 rounded-2xl bg-gradient-to-tr from-[#E50914] via-[#ff7849] to-[#fde68a] opacity-70 blur-md"
-          animate={{ opacity: [0.35, 0.85, 0.35] }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-        />
-
-        {/* Logo image */}
-        <motion.div
-          className="relative w-11 h-11 rounded-2xl overflow-hidden bg-black border border-white/15 shadow-[0_12px_32px_rgba(0,0,0,0.9)]"
-          whileHover={{ scale: 1.06, rotate: -2 }}
-          whileTap={{ scale: 0.96 }}
-          transition={{ type: 'spring', stiffness: 320, damping: 18 }}
+          className="relative px-5 py-2.5 rounded-2xl bg-[#141414] border border-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden group"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <img
-            src="https://i.postimg.cc/34S0LZtv/Whats-App-Image-2025-12-01-at-21-15-19-8f747c93.jpg"
-            alt="Memes Finder logo"
-            className="w-full h-full object-cover"
-          />
-        </motion.div>
-      </div>
-
-      <div className="flex flex-col leading-tight">
-        {/* Main brand text */}
-        <motion.div
-          className="flex items-baseline gap-1"
-          initial={{ x: -4, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.7, ease: 'easeOut' }}
-        >
-          <span className="text-[10px] font-semibold text-gray-400 tracking-[0.25em] uppercase">
-            MF
-          </span>
-          <span className="text-[10px] font-medium text-gray-500 uppercase tracking-[0.18em]">
-            • APP
-          </span>
-        </motion.div>
-
-        <motion.div
-          className="relative"
-          initial={{ scale: 0.96 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-        >
-          <motion.span
-            className="text-[15px] font-extrabold bg-gradient-to-r from-[#ffffff] via-[#fee2e2] to-[#fed7aa] bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(255,255,255,0.15)]"
-            animate={{
-              textShadow: [
-                '0 0 8px rgba(255,255,255,0.25)',
-                '0 0 16px rgba(229,9,20,0.4)',
-                '0 0 8px rgba(255,255,255,0.25)',
-              ],
-            }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            MEMES FINDER
-          </motion.span>
-
-          {/* small underline accent */}
+          {/* Shimmer effect */}
           <motion.div
-            className="absolute -bottom-1 left-0 h-[2px] rounded-full bg-gradient-to-r from-[#E50914] via-[#fb923c] to-transparent"
-            initial={{ width: 0 }}
-            animate={{ width: '82%' }}
-            transition={{ duration: 0.7, delay: 0.25, ease: 'easeOut' }}
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full"
+            animate={{ translateX: ['-100%', '200%'] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'linear', repeatDelay: 3 }}
           />
+          
+          <h1 className="text-3xl font-black tracking-tighter leading-none flex items-center relative z-10">
+            <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]">MF</span>
+            <span className="mx-2 w-1.5 h-1.5 rounded-full bg-[#E50914] animate-pulse" />
+            <span className="bg-gradient-to-r from-[#E50914] via-[#f97316] to-[#fde68a] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(229,9,20,0.5)]">
+              MEMES
+            </span>
+          </h1>
         </motion.div>
 
-        <motion.span
-          className="mt-1 text-[11px] text-gray-400"
-          animate={{ opacity: [0.6, 1, 0.6] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        <motion.div 
+          className="flex items-center gap-2 mt-1.5"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
         >
-          Templates • BGMs • Clips
-        </motion.span>
+          <div className="h-[1px] w-4 bg-gradient-to-r from-transparent to-gray-700" />
+          <span className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500 whitespace-nowrap">
+            Ultimate Meme Platform
+          </span>
+          <div className="h-[1px] w-4 bg-gradient-to-l from-transparent to-gray-700" />
+        </motion.div>
       </div>
     </motion.div>
   )
@@ -124,55 +83,153 @@ function Logo() {
 
 function TopNavMobile({ user, onOpenLogin, onOpenSignup, onOpenUpload }) {
   return (
-    <header className="flex items-center justify-between px-4 py-3 bg-gradient-to-b from-[#141414] to-[#0b0b0b] border-b border-transparent">
-      <Logo />
-      <div className="flex items-center gap-2">
-        {!user && (
-          <button 
-            onClick={onOpenSignup} 
-            className="px-3 py-2 rounded-md bg-transparent border border-gray-700 text-white text-xs font-semibold hover:bg-gray-800"
-          >
-            Sign Up
-          </button>
-        )}
-        <button 
-          onClick={onOpenLogin} 
-          className="p-2 rounded-full border border-gray-700 text-gray-200 flex items-center justify-center min-w-[32px] h-[32px] overflow-hidden"
+    <header className="flex items-center justify-between px-5 py-4 bg-[#0b0b0b] relative z-50">
+      <div className="flex items-center gap-3">
+        <motion.button 
+          onClick={onOpenLogin}
+          whileTap={{ scale: 0.9 }}
+          className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden group hover:border-[#E50914]/50 transition-colors shadow-lg shadow-black"
         >
           {user ? (
-            <span className="text-xs font-bold text-[#E50914]">{user.username.charAt(0).toUpperCase()}</span>
+            <div className="w-full h-full bg-gradient-to-br from-[#E50914] to-orange-600 flex items-center justify-center text-sm font-black text-white">
+              {user.username.charAt(0).toUpperCase()}
+            </div>
           ) : (
-            '👤'
+            <span className="text-gray-400 group-hover:text-white transition-colors">👤</span>
           )}
-        </button>
-        <button aria-label="upload" onClick={onOpenUpload} className="p-2 rounded-md bg-[#E50914] text-white text-xs font-semibold">
+        </motion.button>
+        <div className="flex flex-col">
+          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-none">Find your</span>
+          <span className="text-xs font-black text-white tracking-tight">Best Memes</span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        {!user && (
+          <motion.button 
+            onClick={onOpenSignup}
+            whileTap={{ scale: 0.95 }}
+            className="text-[11px] font-black text-white/60 hover:text-white uppercase tracking-wider transition-colors"
+          >
+            Sign Up
+          </motion.button>
+        )}
+        <motion.button 
+          onClick={onOpenUpload}
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.95 }}
+          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E50914] to-[#f97316] text-white text-[11px] font-black uppercase tracking-widest shadow-lg shadow-red-900/40 border border-white/10"
+        >
           Upload
-        </button>
+        </motion.button>
       </div>
     </header>
   )
 }
 
 function SearchBarMobile({ onSearch }) {
-  const [q, setQ] = useState('')
-  const handleChange = (e) => { setQ(e.target.value); onSearch && onSearch(e.target.value) }
+  const [q, setQ]               = useState('')
+  const [listening, setListening] = useState(false)
+  const [supported, setSupported] = useState(false)
+  const recogRef = useRef(null)
+
+  useEffect(() => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (SR) {
+      setSupported(true)
+      const r = new SR()
+      r.continuous      = false
+      r.interimResults  = true
+      r.lang            = 'en-US'
+      r.onstart  = () => setListening(true)
+      r.onend    = () => setListening(false)
+      r.onerror  = () => setListening(false)
+      r.onresult = (e) => {
+        const transcript = Array.from(e.results).map(res => res[0].transcript).join('')
+        setQ(transcript)
+        onSearch && onSearch(transcript)
+      }
+      recogRef.current = r
+    }
+  }, [])
+
+  const handleChange = (e) => {
+    setQ(e.target.value)
+    onSearch && onSearch(e.target.value)
+  }
+
+  const toggleVoice = () => {
+    if (!recogRef.current) return
+    if (listening) { recogRef.current.stop() }
+    else           { recogRef.current.start() }
+  }
+
+  const clearQuery = () => { setQ(''); onSearch && onSearch('') }
+
   return (
     <div className="px-4 pt-4">
-      <div className="flex items-center gap-3 bg-[#121212] border border-gray-800 rounded-full px-3 py-2 shadow-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path d="M21 21l-4.35-4.35" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="11" cy="11" r="5" stroke="#9CA3AF" strokeWidth="1.5" />
+      <motion.div
+        animate={{ boxShadow: listening ? '0 0 0 2px rgba(239,68,68,0.6)' : '0 0 0 0px transparent' }}
+        transition={{ duration: 0.3 }}
+        className="flex items-center gap-3 bg-[#141414] border border-gray-800 rounded-2xl px-3 py-2.5 shadow-sm"
+      >
+        {/* Search icon */}
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M21 21l-4.35-4.35" stroke="#6B7280" strokeWidth="1.8" strokeLinecap="round"/>
+          <circle cx="11" cy="11" r="5.5" stroke="#6B7280" strokeWidth="1.8"/>
         </svg>
+
         <input
-          value={q}
+          value={listening ? q + '…' : q}
           onChange={handleChange}
-          aria-label="Search templates or BGMs"
-          placeholder="Search memes, templates, BGMs..."
-          className="flex-1 text-sm bg-transparent outline-none placeholder-gray-500 text-gray-200"
+          aria-label="Search memes"
+          placeholder={listening ? '🔴 Listening...' : 'Search memes, templates, BGMs...'}
+          className="flex-1 text-sm bg-transparent outline-none placeholder-gray-600 text-gray-200"
         />
-        {q && <button onClick={() => { setQ(''); onSearch && onSearch(''); }} className="text-gray-400 text-xs">✕</button>}
-        <button aria-label="voice" className="p-1 text-gray-300">🎤</button>
-      </div>
+
+        {/* Clear button */}
+        {q && !listening && (
+          <motion.button
+            initial={{ scale: 0 }} animate={{ scale: 1 }}
+            onClick={clearQuery}
+            className="text-gray-500 hover:text-gray-300 text-xs w-4 h-4 flex items-center justify-center"
+          >✕</motion.button>
+        )}
+
+        {/* Voice button */}
+        {supported && (
+          <motion.button
+            onClick={toggleVoice}
+            whileTap={{ scale: 0.85 }}
+            animate={listening ? {
+              scale: [1, 1.15, 1],
+              transition: { duration: 0.8, repeat: Infinity }
+            } : { scale: 1 }}
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-sm transition-all ${
+              listening
+                ? 'bg-red-500 text-white shadow-lg shadow-red-500/50'
+                : 'bg-white/8 text-gray-400 hover:text-white hover:bg-white/15'
+            }`}
+            aria-label={listening ? 'Stop voice search' : 'Start voice search'}
+          >
+            {listening ? '⏹' : '🎤'}
+          </motion.button>
+        )}
+      </motion.div>
+
+      {/* Listening wave indicator */}
+      <AnimatePresence>
+        {listening && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex items-center justify-center gap-1 pt-2"
+          >
+            <span className="text-red-400 text-[10px] font-semibold animate-pulse">🔴 Voice search active — speak now</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -961,94 +1018,282 @@ function CategoryGridPage({ category, onBack }) {
   )
 }
 
+const GEMINI_KEY_STORE = 'mf_gemini_key'
+
+const MEME_BOT_SYSTEM = `You are MF Bot — a witty, fun AI assistant for "MF Memes Finder", a meme template discovery platform. 
+Help users find meme templates, suggest funny captions, explain meme trends, and recommend viral content.
+Keep replies short (2-4 sentences max), conversational, and meme-culture aware. Use emojis occasionally.
+When someone asks for a template recommendation, name specific meme formats. Never break character.`
+
+// Smart local fallback responses (used when no Gemini key)
+const LOCAL_BOT_REPLIES = [
+  (q) => q.toLowerCase().includes('brahmi') ? "🎬 Brahmi's shock/surprise templates are FIRE right now! Tap the Brahmi category to browse all clips." : null,
+  (q) => q.toLowerCase().includes('sunil') ? "😂 Sunil's reaction templates are classic! Check the Sunil section — tons of viral-ready clips there." : null,
+  (q) => q.toLowerCase().includes('trending') || q.toLowerCase().includes('viral') ? "🔥 Hit the Explore tab → 'Hot' filter for the latest viral memes from r/memes right now!" : null,
+  (q) => q.toLowerCase().includes('download') || q.toLowerCase().includes('save') ? "⬇️ In the Reels viewer, tap the ⬇️ button on any meme to download it directly to your device!" : null,
+  (q) => q.toLowerCase().includes('edit') || q.toLowerCase().includes('remix') || q.toLowerCase().includes('create') ? "✏️ Tap any meme in Reels view → hit the ✏️ Remix button to open the full Meme Editor with text, stickers & filters!" : null,
+  (q) => q.toLowerCase().includes('audio') || q.toLowerCase().includes('bgm') ? "🎵 Check the Audio Clips section on the home screen — Beat Pack, Mass Entry Drops, Dialog Cuts and more!" : null,
+  (q) => q.toLowerCase().includes('hello') || q.toLowerCase().includes('hi') || q.toLowerCase().includes('hey') ? "👋 Hey! I'm MF Bot. Ask me anything about meme templates, trends, or how to use the app!" : null,
+  () => "🤖 Great question! Try browsing the Explore tab for trending memes, or tap any category for curated template packs. Need something specific? Just ask!",
+]
+
+function getLocalReply(q) {
+  for (const fn of LOCAL_BOT_REPLIES) {
+    const r = fn(q)
+    if (r) return r
+  }
+  return LOCAL_BOT_REPLIES[LOCAL_BOT_REPLIES.length - 1]()
+}
+
+async function askGemini(apiKey, history, userMsg) {
+  const contents = [
+    { role: 'user', parts: [{ text: MEME_BOT_SYSTEM }] },
+    { role: 'model', parts: [{ text: "Got it! I'm MF Bot, ready to help with memes! 🎭" }] },
+    ...history.slice(-6).map(m => ({
+      role: m.from === 'user' ? 'user' : 'model',
+      parts: [{ text: m.text }]
+    })),
+    { role: 'user', parts: [{ text: userMsg }] }
+  ]
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents, generationConfig: { maxOutputTokens: 200, temperature: 0.85 } })
+    }
+  )
+  if (!res.ok) throw new Error(`Gemini API error: ${res.status}`)
+  const data = await res.json()
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble right now. Try again!"
+}
+// ────────────────────────────────────────────────────────────────────────────────
+
 function ChatScreen({ user, onRequireLogin }) {
-  const [messages, setMessages] = useState([])
-  const [inputText, setInputText] = useState('')
+  const [messages, setMessages] = useState([
+    { id: '0', from: 'bot', text: "👋 Hey! I'm MF Bot — your meme assistant! Ask me about templates, trends, or anything meme-related. 🎭\n\n💡 *Tip: Add a Gemini API key in settings (⚙️) for full AI chat!*" }
+  ])
+  const [inputText, setInputText]   = useState('')
+  const [isTyping,  setIsTyping]    = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [apiKey, setApiKey]         = useState(() => localStorage.getItem(GEMINI_KEY_STORE) || '')
+  const [apiKeyInput, setApiKeyInput] = useState(() => localStorage.getItem(GEMINI_KEY_STORE) || '')
+  const [listening, setListening]   = useState(false)
+  const bottomRef = useRef(null)
+  const recogRef  = useRef(null)
 
   useEffect(() => {
-    fetch(`https://mf-memes-finder-backend.onrender.com/api/chat`)
-      .then(res => res.json())
-      .then(data => setMessages(data))
-      .catch(err => console.error(err))
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (SR) {
+      const r = new SR()
+      r.continuous = false
+      r.interimResults = true
+      r.lang = 'en-US'
+      r.onstart = () => setListening(true)
+      r.onend = () => setListening(false)
+      r.onerror = () => setListening(false)
+      r.onresult = (e) => {
+        const transcript = Array.from(e.results).map(res => res[0].transcript).join('')
+        setInputText(transcript)
+      }
+      recogRef.current = r
+    }
   }, [])
 
+  const toggleVoice = () => {
+    if (!recogRef.current) return
+    if (listening) recogRef.current.stop()
+    else recogRef.current.start()
+  }
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isTyping])
+
   const handleSend = async () => {
-    if (!inputText.trim()) return;
-    if (!user) {
-      onRequireLogin();
-      return;
-    }
-    const newMsg = { from: 'user', text: inputText, userId: user.id }
-    setMessages(prev => [...prev, { _id: Date.now().toString(), ...newMsg }])
+    const text = inputText.trim()
+    if (!text) return
+
+    const userMsg = { id: Date.now().toString(), from: 'user', text }
+    setMessages(prev => [...prev, userMsg])
     setInputText('')
-    
-    try {
-      await fetch(`https://mf-memes-finder-backend.onrender.com/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newMsg)
-      })
-    } catch(err) {
-      console.error(err)
+    setIsTyping(true)
+
+    // small delay for realism
+    await new Promise(r => setTimeout(r, 800 + Math.random() * 600))
+
+    let reply
+    const storedKey = localStorage.getItem(GEMINI_KEY_STORE)
+    if (storedKey) {
+      try {
+        reply = await askGemini(storedKey, messages, text)
+      } catch {
+        reply = "⚠️ Gemini API error — check your API key in settings. Using local mode: " + getLocalReply(text)
+      }
+    } else {
+      reply = getLocalReply(text)
     }
+
+    setIsTyping(false)
+    setMessages(prev => [...prev, { id: Date.now().toString() + 'b', from: 'bot', text: reply }])
+  }
+
+  const saveApiKey = () => {
+    localStorage.setItem(GEMINI_KEY_STORE, apiKeyInput.trim())
+    setApiKey(apiKeyInput.trim())
+    setShowSettings(false)
+    setMessages(prev => [...prev, {
+      id: 'key-saved',
+      from: 'bot',
+      text: apiKeyInput.trim()
+        ? '✅ Gemini API key saved! I\'m now powered by Google AI 🚀'
+        : '🔓 API key removed. Switched back to local smart mode.'
+    }])
   }
 
   return (
-    <div className="px-4 pt-4 pb-4 flex flex-col min-h-[520px]">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="text-sm font-semibold text-gray-100">Chat with admin</h2>
-          <span className="text-[11px] text-gray-500">Ask for new templates, BGMs or clips</span>
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 120px)', minHeight: 480 }}>
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3 flex items-center justify-between border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600 flex items-center justify-center text-lg shadow-lg shadow-purple-900/40">
+              🤖
+            </div>
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#0b0b0b]" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-white leading-none">MF Bot</p>
+            <p className="text-[10px] text-emerald-400 mt-0.5 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
+              {apiKey ? 'AI Powered · Gemini' : 'Smart Local Mode'}
+            </p>
+          </div>
         </div>
-        <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40">
-          Online
-        </span>
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setShowSettings(v => !v)}
+          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border transition-all ${showSettings ? 'bg-purple-600/30 border-purple-500/50 text-purple-300' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
+        >⚙️</motion.button>
       </div>
 
-      {/* Messages list */}
-      <div className="flex-1 overflow-y-auto space-y-3 pr-1 pb-2">
-        {messages.map((msg) => (
-          <div
-            key={msg._id || msg.id}
-            className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}
+      {/* Settings Panel */}
+      <AnimatePresence>
+        {showSettings && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
           >
-            <div
-              className={`max-w-[75%] rounded-2xl px-3 py-2 text-[12px] leading-snug shadow-[0_8px_26px_rgba(0,0,0,0.65)] border ${
-                msg.from === 'user'
-                  ? 'bg-gradient-to-br from-[#E50914] via-[#f97316] to-[#fb923c] text-white border-transparent'
-                  : 'bg-[#111827] text-gray-100 border-gray-700'
-              }`}
-            >
+            <div className="mx-4 my-2 p-4 rounded-2xl bg-[#1a1a2e] border border-purple-700/30">
+              <p className="text-xs font-bold text-purple-300 mb-1">🔑 Gemini API Key</p>
+              <p className="text-[10px] text-gray-500 mb-3">
+                Get a free key at <span className="text-purple-400">aistudio.google.com</span> → Create API Key
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={apiKeyInput}
+                  onChange={e => setApiKeyInput(e.target.value)}
+                  placeholder="Paste your Gemini API key..."
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-600 outline-none focus:border-purple-500/50"
+                />
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={saveApiKey}
+                  className="px-3 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold"
+                >Save</motion.button>
+              </div>
+              {apiKey && (
+                <p className="text-[10px] text-emerald-400 mt-2">✅ Key active — {apiKey.slice(0, 8)}...</p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 no-scrollbar">
+        {messages.map((msg, i) => (
+          <motion.div
+            key={msg.id}
+            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.2, delay: i === messages.length - 1 ? 0 : 0 }}
+            className={`flex items-end gap-2 ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            {msg.from === 'bot' && (
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-[10px] flex-shrink-0 mb-0.5">🤖</div>
+            )}
+            <div className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-[12px] leading-relaxed shadow-lg whitespace-pre-wrap ${
+              msg.from === 'user'
+                ? 'bg-gradient-to-br from-[#E50914] via-[#f97316] to-[#fb923c] text-white rounded-br-sm'
+                : 'bg-[#1a1a2e] border border-white/8 text-gray-100 rounded-bl-sm'
+            }`}>
               {msg.text}
             </div>
-          </div>
+          </motion.div>
+        ))}
+
+        {/* Typing indicator */}
+        {isTyping && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-end gap-2 justify-start"
+          >
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-[10px] flex-shrink-0">🤖</div>
+            <div className="bg-[#1a1a2e] border border-white/8 rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1 items-center">
+              {[0, 1, 2].map(i => (
+                <motion.div key={i} className="w-1.5 h-1.5 rounded-full bg-purple-400"
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Quick replies */}
+      <div className="px-4 pb-2 flex gap-2 overflow-x-auto no-scrollbar">
+        {['🔥 Trending memes', '✏️ How to remix?', '💾 Save templates', '🎵 Find BGMs'].map(q => (
+          <button key={q} onClick={() => { setInputText(q.replace(/^.+ /, '')); }}
+            className="flex-shrink-0 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-gray-400 text-[10px] font-medium hover:bg-white/10 hover:text-white transition-all">
+            {q}
+          </button>
         ))}
       </div>
 
-      {/* Message bar */}
-      <div className="mt-3 rounded-2xl bg-[#050816] border border-gray-800 px-3 py-2 flex items-center gap-2 shadow-[0_12px_30px_rgba(0,0,0,0.85)]">
-        <button
-          type="button"
-          className="w-7 h-7 rounded-full bg-gradient-to-br from-[#1e293b] to-[#020617] flex items-center justify-center text-[13px] text-cyan-300 border border-cyan-400/40"
-        >
-          +
-        </button>
-        <input
-          value={inputText}
-          onChange={e => setInputText(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSend()}
-          className="flex-1 bg-transparent outline-none text-[12px] text-gray-100 placeholder-gray-500"
-          placeholder="Ask admin: e.g. ‘Need Brahmi reaction template’"
-        />
-        <motion.button
-          onClick={handleSend}
-          whileHover={{ scale: 1.05, x: 1 }}
-          whileTap={{ scale: 0.94 }}
-          type="button"
-          className="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#E50914] via-[#f97316] to-[#fde68a] text-[11px] font-semibold text-black shadow-[0_10px_30px_rgba(248,113,113,0.7)]"
-        >
-          Send
-        </motion.button>
+      {/* Input bar */}
+      <div className="px-4 pb-4">
+        <div className="flex items-center gap-2 bg-[#111] border border-white/10 rounded-2xl px-2 py-2 shadow-xl relative">
+          <motion.button
+            onClick={toggleVoice}
+            whileTap={{ scale: 0.9 }}
+            animate={listening ? { scale: [1, 1.2, 1], transition: { repeat: Infinity, duration: 1 } } : {}}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${listening ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+          >
+            {listening ? '⏺' : '🎤'}
+          </motion.button>
+          <input
+            value={inputText}
+            onChange={e => setInputText(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+            className="flex-1 bg-transparent outline-none text-[13px] text-gray-100 placeholder-gray-600 px-1"
+            placeholder={listening ? 'Listening...' : "Ask MF Bot anything..."}
+          />
+          <motion.button
+            onClick={handleSend}
+            disabled={!inputText.trim() || isTyping}
+            whileTap={{ scale: 0.9 }}
+            className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#E50914] to-[#f97316] flex items-center justify-center text-white text-sm font-black disabled:opacity-40 shadow-lg shadow-red-900/40"
+          >
+            →
+          </motion.button>
+        </div>
       </div>
     </div>
   )
