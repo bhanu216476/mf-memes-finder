@@ -37,45 +37,86 @@ const AUDIO_CLIPS = [
 function Logo() {
   return (
     <motion.div
-      className="flex flex-col items-center"
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+      className="flex items-center gap-3"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: 'easeOut' }}
     >
-      <div className="flex flex-col items-center gap-0.5">
+      <div className="relative">
+        {/* Glow behind logo */}
         <motion.div
-          className="relative px-5 py-2.5 rounded-2xl bg-[#141414] border border-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden group"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          className="absolute -inset-0.5 rounded-2xl bg-gradient-to-tr from-[#E50914] via-[#ff7849] to-[#fde68a] opacity-70 blur-md"
+          animate={{ opacity: [0.35, 0.85, 0.35] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+        />
+
+        {/* Logo image */}
+        <motion.div
+          className="relative w-11 h-11 rounded-2xl overflow-hidden bg-black border border-white/15 shadow-[0_12px_32px_rgba(0,0,0,0.9)]"
+          whileHover={{ scale: 1.06, rotate: -2 }}
+          whileTap={{ scale: 0.96 }}
+          transition={{ type: 'spring', stiffness: 320, damping: 18 }}
         >
-          {/* Shimmer effect */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full"
-            animate={{ translateX: ['-100%', '200%'] }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: 'linear', repeatDelay: 3 }}
+          <img
+            src="https://i.postimg.cc/34S0LZtv/Whats-App-Image-2025-12-01-at-21-15-19-8f747c93.jpg"
+            alt="Memes Finder logo"
+            className="w-full h-full object-cover"
           />
-          
-          <h1 className="text-3xl font-black tracking-tighter leading-none flex items-center relative z-10">
-            <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]">MF</span>
-            <span className="mx-2 w-1.5 h-1.5 rounded-full bg-[#E50914] animate-pulse" />
-            <span className="bg-gradient-to-r from-[#E50914] via-[#f97316] to-[#fde68a] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(229,9,20,0.5)]">
-              MEMES
-            </span>
-          </h1>
+        </motion.div>
+      </div>
+
+      <div className="flex flex-col leading-tight">
+        {/* Main brand text */}
+        <motion.div
+          className="flex items-baseline gap-1"
+          initial={{ x: -4, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.7, ease: 'easeOut' }}
+        >
+          <span className="text-[10px] font-semibold text-gray-400 tracking-[0.25em] uppercase">
+            MF
+          </span>
+          <span className="text-[10px] font-medium text-gray-500 uppercase tracking-[0.18em]">
+            • APP
+          </span>
         </motion.div>
 
-        <motion.div 
-          className="flex items-center gap-2 mt-1.5"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+        <motion.div
+          className="relative"
+          initial={{ scale: 0.96 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
         >
-          <div className="h-[1px] w-4 bg-gradient-to-r from-transparent to-gray-700" />
-          <span className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500 whitespace-nowrap">
-            Ultimate Meme Platform
-          </span>
-          <div className="h-[1px] w-4 bg-gradient-to-l from-transparent to-gray-700" />
+          <motion.span
+            className="text-[15px] font-extrabold bg-gradient-to-r from-[#ffffff] via-[#fee2e2] to-[#fed7aa] bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(255,255,255,0.15)]"
+            animate={{
+              textShadow: [
+                '0 0 8px rgba(255,255,255,0.25)',
+                '0 0 16px rgba(229,9,20,0.4)',
+                '0 0 8px rgba(255,255,255,0.25)',
+              ],
+            }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            MEMES FINDER
+          </motion.span>
+
+          {/* small underline accent */}
+          <motion.div
+            className="absolute -bottom-1 left-0 h-[2px] rounded-full bg-gradient-to-r from-[#E50914] via-[#fb923c] to-transparent"
+            initial={{ width: 0 }}
+            animate={{ width: '82%' }}
+            transition={{ duration: 0.7, delay: 0.25, ease: 'easeOut' }}
+          />
         </motion.div>
+
+        <motion.span
+          className="mt-1 text-[11px] text-gray-400"
+          animate={{ opacity: [0.6, 1, 0.6] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          Templates • BGMs • Clips
+        </motion.span>
       </div>
     </motion.div>
   )
