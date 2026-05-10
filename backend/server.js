@@ -9,19 +9,29 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/memesfinder';
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.log('MongoDB Connection Error: ', err));
+// Robust MongoDB Connection
+const MONGO_URI = process.env.MONGO_URI;
+if (MONGO_URI) {
+  mongoose.connect(MONGO_URI)
+    .then(() => console.log('MongoDB Connected'))
+    .catch(err => console.log('MongoDB Connection Error: ', err));
+} else {
+  console.warn('⚠️ MONGO_URI missing. Backend will run in fallback (volatile) mode.');
+}
 
 // Routes
+app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/templates', require('./routes/templates'));
 app.use('/api/audio', require('./routes/audio'));
 app.use('/api/chat', require('./routes/chat'));
 
+// Fallback for 404
+app.use('/api/*', (req, res) => res.status(404).json({ error: 'Endpoint not found' }));
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Backend server running on port ${PORT}`));
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`Backend server running on port ${PORT}`));
+}
 
 module.exports = app;
