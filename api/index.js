@@ -1,2 +1,2 @@
-import app from '../backend/server.cjs';
+import app from './src/server.cjs';
 export default app;
