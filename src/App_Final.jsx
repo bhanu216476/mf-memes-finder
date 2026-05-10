@@ -1159,91 +1159,270 @@ function StaticFooter() {
   )
 }
 
+// ─── LOCAL AUTH HELPERS (works fully client-side, no backend needed) ────────────
+const AUTH_STORE_KEY = 'mf_users_db'
+const SESSION_KEY = 'mf_session'
+
+// Simple deterministic hash — good enough for client-side session matching
+function simpleHash(str) {
+  let h = 0x811c9dc5
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i)
+    h = (h * 0x01000193) >>> 0
+  }
+  return h.toString(16)
+}
+
+function getUsersDB() {
+  try { return JSON.parse(localStorage.getItem(AUTH_STORE_KEY) || '{}') }
+  catch { return {} }
+}
+
+function saveUsersDB(db) {
+  localStorage.setItem(AUTH_STORE_KEY, JSON.stringify(db))
+}
+
+function authRegister(username, password) {
+  const db = getUsersDB()
+  const key = username.toLowerCase().trim()
+  if (!key || key.length < 3) return { ok: false, message: 'Username must be at least 3 characters.' }
+  if (password.length < 4) return { ok: false, message: 'Password must be at least 4 characters.' }
+  if (db[key]) return { ok: false, message: 'Username already taken. Try a different one.' }
+  const user = { id: `u_${Date.now()}`, username: key, displayName: username.trim(), createdAt: Date.now() }
+  db[key] = { ...user, pwHash: simpleHash(password) }
+  saveUsersDB(db)
+  const session = { ...user, token: simpleHash(user.id + Date.now()) }
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+  return { ok: true, user: session }
+}
+
+function authLogin(username, password) {
+  const db = getUsersDB()
+  const key = username.toLowerCase().trim()
+  const record = db[key]
+  if (!record) return { ok: false, message: 'Account not found. Please sign up first.' }
+  if (record.pwHash !== simpleHash(password)) return { ok: false, message: 'Wrong password. Please try again.' }
+  const { pwHash, ...user } = record
+  const session = { ...user, token: simpleHash(user.id + Date.now()) }
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+  return { ok: true, user: session }
+}
+
+function authLogout() {
+  localStorage.removeItem(SESSION_KEY)
+}
+
+function getPersistedSession() {
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null') }
+  catch { return null }
+}
+// ────────────────────────────────────────────────────────────────────────────────
+
 function LoginModal({ isOpen, onClose, onLogin, initialIsRegister = false }) {
   const [isRegister, setIsRegister] = useState(initialIsRegister)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [username, setUsername]     = useState('')
+  const [password, setPassword]     = useState('')
+  const [showPw,   setShowPw]       = useState(false)
+  const [isLoading, setIsLoading]   = useState(false)
+  const [error,    setError]        = useState('')
+  const [success,  setSuccess]      = useState('')
 
   useEffect(() => {
     setIsRegister(initialIsRegister)
+    setError('')
+    setSuccess('')
+    setUsername('')
+    setPassword('')
   }, [initialIsRegister, isOpen])
 
   if (!isOpen) return null
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
+    setSuccess('')
     setIsLoading(true)
-    const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login'
-    const payload = { username, password }
-    const fullUrl = `https://mf-memes-finder-backend.onrender.com${endpoint}`
 
-    console.log(`Auth attempt: ${isRegister ? 'REGISTER' : 'LOGIN'} to ${fullUrl}`)
+    // Tiny delay for UX feel
+    await new Promise(r => setTimeout(r, 600))
 
-    try {
-      const res = await fetch(fullUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      const data = await res.json()
+    const result = isRegister
+      ? authRegister(username.trim(), password)
+      : authLogin(username.trim(), password)
 
-      if (res.ok) {
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('user', JSON.stringify(data.user))
-        onLogin(data.user)
-        onClose()
-        alert(isRegister ? 'Welcome! Your account is ready.' : 'Welcome back!')
-      } else {
-        alert(data.message || 'Authentication failed. Please check your credentials.')
-      }
-    } catch (err) {
-      console.error('Auth error:', err)
-      alert('Network error. Please check your internet connection and try again.')
-    } finally {
-      setIsLoading(false)
+    setIsLoading(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      return
     }
+
+    setSuccess(isRegister ? '🎉 Account created! Welcome!' : '👋 Welcome back!')
+    onLogin(result.user)
+    setTimeout(() => { onClose() }, 900)
+  }
+
+  const switchMode = () => {
+    setIsRegister(v => !v)
+    setError('')
+    setSuccess('')
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-[320px] bg-[#141414] border border-gray-800 rounded-2xl p-6 shadow-2xl relative"
-      >
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
-        <h2 className="text-xl font-bold text-white mb-6 text-center">
-          {isRegister ? 'Create Account' : 'Sign In'}
-        </h2>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input 
-            type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required
-            className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#E50914]"
-          />
-          <input 
-            type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required
-            className="w-full bg-[#222] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#E50914]"
-          />
-
-          <button 
-            type="submit" 
-            disabled={isLoading}
-            className={`w-full text-white font-bold rounded-xl py-4 mt-2 transition-all shadow-lg ${
-              isLoading ? 'bg-gray-700 cursor-not-allowed' : 'bg-[#E50914] hover:bg-[#f97316] hover:scale-[1.02]'
-            }`}
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          key="login-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[500] flex items-center justify-center bg-black/75 backdrop-blur-md p-4"
+          onClick={onClose}
+        >
+          <motion.div
+            key="login-card"
+            initial={{ opacity: 0, scale: 0.88, y: 30 }}
+            animate={{ opacity: 1, scale: 1,    y: 0  }}
+            exit={{   opacity: 0, scale: 0.88, y: 30  }}
+            transition={{ type: 'spring', damping: 22, stiffness: 240 }}
+            onClick={e => e.stopPropagation()}
+            className="w-full max-w-[340px] relative overflow-hidden"
           >
-            {isLoading ? 'Processing...' : (isRegister ? 'Create My Account' : 'Sign In Now')}
-          </button>
-        </form>
-        <p className="text-xs text-gray-500 text-center mt-6">
-          {isRegister ? 'Already a member? ' : 'New to Memes Finder? '}
-          <button type="button" onClick={() => setIsRegister(!isRegister)} className="text-white font-bold hover:underline">
-            {isRegister ? 'Log In' : 'Sign Up for Free'}
-          </button>
-        </p>
-      </motion.div>
-    </div>
+            {/* Glass card */}
+            <div className="bg-[#141414]/95 border border-white/10 rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.9)] backdrop-blur-xl">
+
+              {/* Top gradient bar */}
+              <div className="h-1 rounded-t-3xl bg-gradient-to-r from-[#E50914] via-pink-500 to-orange-400" />
+
+              <div className="p-7">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-black text-white tracking-tight">
+                      {isRegister ? '✨ Create Account' : '👋 Welcome Back'}
+                    </h2>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {isRegister ? 'Join MF Memes Finder today' : 'Sign in to your account'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="w-8 h-8 rounded-full bg-white/8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/15 transition-colors text-sm"
+                  >✕</button>
+                </div>
+
+                {/* Error / Success banners */}
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{   opacity: 0, height: 0 }}
+                      className="mb-4 px-4 py-3 rounded-xl bg-red-950/60 border border-red-700/50 text-red-300 text-xs font-medium flex items-center gap-2"
+                    >
+                      <span className="text-base">⚠️</span>{error}
+                    </motion.div>
+                  )}
+                  {success && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="mb-4 px-4 py-3 rounded-xl bg-emerald-950/60 border border-emerald-700/50 text-emerald-300 text-xs font-medium flex items-center gap-2"
+                    >
+                      {success}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                  {/* Username */}
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-sm">👤</span>
+                    <input
+                      type="text"
+                      placeholder="Username"
+                      value={username}
+                      onChange={e => { setUsername(e.target.value); setError('') }}
+                      required
+                      autoComplete="username"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-[#E50914]/60 focus:bg-white/8 transition-all"
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔑</span>
+                    <input
+                      type={showPw ? 'text' : 'password'}
+                      placeholder="Password"
+                      value={password}
+                      onChange={e => { setPassword(e.target.value); setError('') }}
+                      required
+                      autoComplete={isRegister ? 'new-password' : 'current-password'}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-10 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-[#E50914]/60 focus:bg-white/8 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPw(v => !v)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors text-xs"
+                    >{showPw ? '🙈' : '👁️'}</button>
+                  </div>
+
+                  {/* Submit */}
+                  <motion.button
+                    type="submit"
+                    disabled={isLoading || !!success}
+                    whileTap={!isLoading ? { scale: 0.97 } : {}}
+                    className="relative w-full overflow-hidden rounded-xl py-3.5 mt-1 font-black text-sm text-white tracking-wide shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
+                    style={{ background: 'linear-gradient(135deg, #E50914 0%, #f97316 60%, #fde68a 100%)' }}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeDasharray="40" strokeDashoffset="20" strokeLinecap="round"/>
+                        </svg>
+                        {isRegister ? 'Creating account...' : 'Signing in...'}
+                      </span>
+                    ) : (
+                      isRegister ? 'Create My Account 🚀' : 'Sign In Now →'
+                    )}
+                  </motion.button>
+                </form>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3 my-5">
+                  <div className="flex-1 h-px bg-white/8" />
+                  <span className="text-[10px] text-gray-600 uppercase tracking-widest">or</span>
+                  <div className="flex-1 h-px bg-white/8" />
+                </div>
+
+                {/* Guest mode */}
+                <button
+                  onClick={() => {
+                    const guest = { id: 'guest', username: 'guest', displayName: 'Guest', token: 'guest-token' }
+                    localStorage.setItem(SESSION_KEY, JSON.stringify(guest))
+                    onLogin(guest)
+                    onClose()
+                  }}
+                  className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 text-sm font-semibold hover:bg-white/10 hover:text-white transition-all"
+                >
+                  Continue as Guest 👻
+                </button>
+
+                {/* Switch mode */}
+                <p className="text-xs text-gray-600 text-center mt-5">
+                  {isRegister ? 'Already have an account? ' : "Don't have an account? "}
+                  <button type="button" onClick={switchMode} className="text-[#E50914] font-bold hover:underline">
+                    {isRegister ? 'Sign In' : 'Sign Up Free'}
+                  </button>
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -1338,10 +1517,8 @@ export default function DemoMobile() {
   const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user')
-    if (savedUser) {
-      setUser(JSON.parse(savedUser))
-    }
+    const session = getPersistedSession()
+    if (session) setUser(session)
   }, [])
 
   // Initialize with dummy data arrays if needed, but we keep the global ones for now
@@ -1487,8 +1664,7 @@ export default function DemoMobile() {
             <ProfilePage 
               user={user} 
               onLogout={() => {
-                localStorage.removeItem('token')
-                localStorage.removeItem('user')
+                authLogout()
                 setUser(null)
                 setScreen('home')
               }} 
