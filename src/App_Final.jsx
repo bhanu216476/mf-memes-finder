@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import MemeEditor from './components/MemeEditor.jsx'
 
 /*
   MF — Memes Finder Preview (Dark / Netflix-like theme)
@@ -152,22 +153,25 @@ function TopNavMobile({ user, onOpenLogin, onOpenSignup, onOpenUpload }) {
   )
 }
 
-function SearchBarMobile() {
+function SearchBarMobile({ onSearch }) {
+  const [q, setQ] = useState('')
+  const handleChange = (e) => { setQ(e.target.value); onSearch && onSearch(e.target.value) }
   return (
     <div className="px-4 pt-4">
       <div className="flex items-center gap-3 bg-[#121212] border border-gray-800 rounded-full px-3 py-2 shadow-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-gray-400" aria-hidden>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
           <path d="M21 21l-4.35-4.35" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           <circle cx="11" cy="11" r="5" stroke="#9CA3AF" strokeWidth="1.5" />
         </svg>
         <input
+          value={q}
+          onChange={handleChange}
           aria-label="Search templates or BGMs"
-          placeholder="Search templates, BGMs, clips..."
+          placeholder="Search memes, templates, BGMs..."
           className="flex-1 text-sm bg-transparent outline-none placeholder-gray-500 text-gray-200"
         />
-        <button aria-label="voice" className="p-1 text-gray-300">
-          🎤
-        </button>
+        {q && <button onClick={() => { setQ(''); onSearch && onSearch(''); }} className="text-gray-400 text-xs">✕</button>}
+        <button aria-label="voice" className="p-1 text-gray-300">🎤</button>
       </div>
     </div>
   )
@@ -618,90 +622,342 @@ function AudioGridPage({ audio, onBack }) {
   )
 }
 
-function CategoryGridPage({ category, onBack }) {
-  const [templates, setTemplates] = useState([])
+function ReelItem({ meme, containerHeight }) {
+  const [liked, setLiked] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [likeCount, setLikeCount] = useState(meme.ups)
+  const [showHeart, setShowHeart] = useState(false)
+  const [commentCount] = useState(Math.floor(Math.random() * 500) + 10)
+  const [editorOpen, setEditorOpen] = useState(false)
+  const lastTap = useRef(0)
 
-  useEffect(() => {
-    fetch(`https://mf-memes-finder-backend.onrender.com/api/templates?categoryId=` + category.id)
-      .then(res => res.json())
-      .then(data => setTemplates(data))
-      .catch(err => console.error(err))
-  }, [category])
+  const handleLike = () => {
+    if (!liked) setLikeCount(c => c + 1)
+    else setLikeCount(c => c - 1)
+    setLiked(v => !v)
+  }
 
-  const slots = Array.from({ length: 12 })
+  const handleDoubleTap = () => {
+    const now = Date.now()
+    if (now - lastTap.current < 300) {
+      if (!liked) {
+        setLiked(true)
+        setLikeCount(c => c + 1)
+      }
+      setShowHeart(true)
+      setTimeout(() => setShowHeart(false), 900)
+    }
+    lastTap.current = now
+  }
+
+  const fmtCount = (n) => n > 1000 ? (n / 1000).toFixed(1) + 'k' : n
 
   return (
-    <div className="px-4 pt-4 pb-6">
-      <div className="flex items-center justify-between mb-4">
+    <div
+      className="relative flex items-center justify-center bg-black flex-shrink-0"
+      style={{ height: containerHeight, width: '100%' }}
+      onClick={handleDoubleTap}
+    >
+      {/* Meme Image */}
+      <img
+        src={meme.url}
+        alt={meme.title}
+        className="w-full h-full object-contain select-none"
+        draggable={false}
+        loading="lazy"
+      />
+
+      {/* Double-tap heart burst */}
+      <AnimatePresence>
+        {showHeart && (
+          <motion.div
+            key="heart-burst"
+            initial={{ scale: 0, opacity: 1 }}
+            animate={{ scale: 3.5, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="absolute pointer-events-none text-6xl z-50 select-none"
+          >❤️</motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom gradient overlay */}
+      <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none z-10" />
+      <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-10" />
+
+      {/* Right action sidebar */}
+      <div className="absolute right-3 z-20 flex flex-col items-center gap-5" style={{ bottom: '80px' }}>
+        {/* Like */}
         <motion.button
-          type="button"
-          onClick={onBack}
-          initial={{ x: -16, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.45, ease: 'easeOut' }}
-          whileHover={{ scale: 1.15, x: -2 }}
-          whileTap={{ scale: 0.9 }}
-          className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-[#E50914] via-[#f97316] to-[#fde68a] text-black shadow-[0_0_18px_rgba(248,113,113,0.7)]"
+          whileTap={{ scale: 0.8 }}
+          onClick={(e) => { e.stopPropagation(); handleLike(); }}
+          className="flex flex-col items-center gap-1"
         >
-          <span className="text-[28px] font-extrabold leading-none">←</span>
-        </motion.button>
-        <div className="flex flex-col items-center gap-0.5">
-          <h2 className="text-sm font-semibold text-gray-100 tracking-wide truncate max-w-[180px]">
-            {category?.label || 'Category'}
-          </h2>
-          <span className="text-[10px] text-gray-500 uppercase tracking-[0.18em]">Video Clips</span>
-        </div>
-        <div className="w-8" />
-      </div>
-
-      {/* Tabs row similar to MOVIES / SERIES */}
-      <div className="flex items-center gap-6 mb-4 text-[11px] font-semibold uppercase tracking-[0.22em]">
-        <div className="relative pb-1 text-teal-300">
-          <span>All Clips</span>
-          <div className="absolute left-0 right-0 -bottom-0.5 h-[2px] rounded-full bg-teal-400" />
-        </div>
-        <div className="text-gray-500">Trending</div>
-      </div>
-
-      {/* 3-column grid with empty placeholders */}
-      <div className="grid grid-cols-3 gap-3">
-        {slots.map((_, index) => {
-          const tmpl = templates[index];
-          return (
-          <motion.button
-            key={index}
-            type="button"
-            whileHover={{ scale: 1.03, y: -2 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-            className="flex flex-col gap-1"
+          <motion.div
+            animate={{ scale: liked ? [1, 1.4, 1] : 1 }}
+            transition={{ duration: 0.3 }}
+            className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-md border border-white/20 flex items-center justify-center text-2xl shadow-xl"
           >
-            <div className="w-full h-32 rounded-xl bg-gradient-to-b from-[#1f2937] to-[#020617] border border-gray-700/70 shadow-[0_18px_38px_rgba(0,0,0,0.85)] overflow-hidden flex items-center justify-center relative">
-              {tmpl ? (
-                <img src={tmpl.imgSrc} alt={tmpl.title} className="absolute inset-0 w-full h-full object-cover" />
-              ) : (
-                <motion.div
-                  className="w-10 h-10 rounded-full border border-gray-500/60 flex items-center justify-center text-xs text-gray-300 bg-black/40"
-                  animate={{
-                    scale: [1, 1.08, 1],
-                    boxShadow: [
-                      '0 0 0 rgba(0,0,0,0)',
-                      '0 0 18px rgba(148,163,184,0.7)',
-                      '0 0 0 rgba(0,0,0,0)',
-                    ],
-                  }}
-                  transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: index * 0.05 }}
-                >
-                  +
-                </motion.div>
-              )}
+            {liked ? '❤️' : '🤍'}
+          </motion.div>
+          <span className="text-white text-[10px] font-bold drop-shadow-lg">{fmtCount(likeCount)}</span>
+        </motion.button>
+
+        {/* Comment */}
+        <button className="flex flex-col items-center gap-1">
+          <div className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-md border border-white/20 flex items-center justify-center text-2xl shadow-xl">💬</div>
+          <span className="text-white text-[10px] font-bold drop-shadow-lg">{fmtCount(commentCount)}</span>
+        </button>
+
+        {/* Remix / Create button */}
+        <motion.button
+          whileTap={{ scale: 0.8 }}
+          onClick={(e) => { e.stopPropagation(); setEditorOpen(true); }}
+          className="flex flex-col items-center gap-1"
+        >
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-600/40 to-purple-600/40 backdrop-blur-md border border-pink-500/40 flex items-center justify-center text-2xl shadow-xl">✏️</div>
+          <span className="text-white text-[10px] font-bold drop-shadow-lg">Remix</span>
+        </motion.button>
+
+        {/* Save */}
+        <motion.button
+          whileTap={{ scale: 0.8 }}
+          onClick={(e) => { e.stopPropagation(); setSaved(v => !v); }}
+          className="flex flex-col items-center gap-1"
+        >
+          <div className={`w-12 h-12 rounded-full backdrop-blur-md border border-white/20 flex items-center justify-center text-2xl shadow-xl transition-colors ${saved ? 'bg-yellow-500/40' : 'bg-black/30'}`}>
+            {saved ? '🔖' : '📌'}
+          </div>
+          <span className="text-white text-[10px] font-bold drop-shadow-lg">Save</span>
+        </motion.button>
+
+        {/* Share */}
+        <button className="flex flex-col items-center gap-1">
+          <div className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-md border border-white/20 flex items-center justify-center text-2xl shadow-xl">↗️</div>
+          <span className="text-white text-[10px] font-bold drop-shadow-lg">Share</span>
+        </button>
+
+        {/* Download */}
+        <a
+          href={meme.url}
+          download
+          target="_blank"
+          rel="noreferrer"
+          onClick={e => e.stopPropagation()}
+          className="flex flex-col items-center gap-1"
+        >
+          <div className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-md border border-white/20 flex items-center justify-center text-2xl shadow-xl">⬇️</div>
+          <span className="text-white text-[10px] font-bold drop-shadow-lg">Save</span>
+        </a>
+      </div>
+
+      {/* MemeEditor overlay */}
+      <AnimatePresence>
+        {editorOpen && (
+          <MemeEditor imageUrl={meme.url} onClose={() => setEditorOpen(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* Bottom info bar */}
+      <div className="absolute left-3 z-20 flex flex-col gap-2" style={{ bottom: '80px', right: '72px' }}>
+        {/* Author row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-pink-500 via-red-500 to-yellow-400 p-[2px] flex-shrink-0">
+            <div className="w-full h-full bg-black rounded-full flex items-center justify-center text-white font-black text-xs uppercase">
+              {meme.author.substring(0, 2)}
             </div>
-            <div className="text-[10px] text-gray-300 font-medium truncate">{tmpl ? tmpl.title : 'Empty Slot'}</div>
-            <div className="text-[9px] text-gray-500 truncate">{tmpl ? 'Tap to view' : 'Tap to attach a clip'}</div>
-          </motion.button>
-        )})}
+          </div>
+          <span className="text-white font-bold text-sm drop-shadow-lg">@{meme.author}</span>
+          <button className="px-3 py-0.5 rounded-full border border-white/40 bg-white/10 text-white text-[10px] font-bold backdrop-blur-sm hover:bg-white/20 transition-colors">
+            Follow
+          </button>
+          {meme.ups > 5000 && (
+            <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white text-[9px] font-black tracking-wider">🔥 TRENDING</span>
+          )}
+        </div>
+        {/* Title */}
+        <p className="text-white text-xs drop-shadow-lg leading-snug line-clamp-2">{meme.title}</p>
+        {/* Audio ticker */}
+        <div className="flex items-center gap-1.5">
+          <div className="w-4 h-4 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-[8px]">🎵</div>
+          <span className="text-white/80 text-[10px] drop-shadow-md">Original Sound · r/{meme.subreddit}</span>
+        </div>
       </div>
     </div>
+  )
+}
+
+function ReelsView({ memes, initialIndex, onClose }) {
+  const containerRef = useRef(null)
+  const [containerHeight, setContainerHeight] = useState(window.innerHeight)
+  const [currentIndex, setCurrentIndex] = useState(initialIndex)
+
+  useEffect(() => {
+    const updateHeight = () => setContainerHeight(window.innerHeight)
+    window.addEventListener('resize', updateHeight)
+    return () => window.removeEventListener('resize', updateHeight)
+  }, [])
+
+  // Scroll to initial index on open
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerHeight * initialIndex
+    }
+  }, [initialIndex, containerHeight])
+
+  // Track current index from scroll position
+  const handleScroll = () => {
+    if (containerRef.current) {
+      const idx = Math.round(containerRef.current.scrollTop / containerHeight)
+      setCurrentIndex(idx)
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: '100%' }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: '100%' }}
+      transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+      className="fixed inset-0 z-[200] bg-black flex flex-col"
+      style={{ height: '100dvh' }}
+    >
+      {/* Top HUD */}
+      <div className="absolute top-0 left-0 right-0 z-30 px-4 pt-3 pb-6 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent pointer-events-none">
+        <button
+          onClick={onClose}
+          className="pointer-events-auto text-white text-2xl font-black drop-shadow-xl w-10 h-10 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm border border-white/10"
+        >←</button>
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-white font-bold tracking-widest text-sm drop-shadow-md">Reels</span>
+          <span className="text-white/50 text-[10px]">{currentIndex + 1} / {memes.length}</span>
+        </div>
+        <div className="w-10" />
+      </div>
+
+      {/* Scrollable reel container */}
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-scroll no-scrollbar"
+        style={{
+          height: containerHeight,
+          scrollSnapType: 'y mandatory',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        {memes.map((meme, idx) => (
+          <div
+            key={idx}
+            style={{
+              height: containerHeight,
+              scrollSnapAlign: 'start',
+              scrollSnapStop: 'always',
+            }}
+          >
+            <ReelItem meme={meme} containerHeight={containerHeight} />
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  )
+}
+
+function CategoryGridPage({ category, onBack }) {
+  const [templates, setTemplates] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [activeReelIndex, setActiveReelIndex] = useState(null)
+
+  useEffect(() => {
+    setLoading(true)
+    // Fetch 50 memes from public API to replace broken backend
+    fetch(`https://meme-api.com/gimme/50`)
+      .then(res => res.json())
+      .then(data => {
+        setTemplates(data.memes || [])
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error(err)
+        setLoading(false)
+      })
+  }, [category])
+
+  return (
+    <>
+      <div className="px-4 pt-4 pb-24 h-full overflow-y-auto no-scrollbar">
+        <div className="flex items-center justify-between mb-4">
+          <motion.button
+            type="button"
+            onClick={onBack}
+            initial={{ x: -16, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+            whileHover={{ scale: 1.15, x: -2 }}
+            whileTap={{ scale: 0.9 }}
+            className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-[#E50914] via-[#f97316] to-[#fde68a] text-black shadow-[0_0_18px_rgba(248,113,113,0.7)]"
+          >
+            <span className="text-[28px] font-extrabold leading-none">←</span>
+          </motion.button>
+          <div className="flex flex-col items-center gap-0.5">
+            <h2 className="text-sm font-semibold text-gray-100 tracking-wide truncate max-w-[180px]">
+              {category?.label || 'Trending Memes'}
+            </h2>
+            <span className="text-[10px] text-gray-500 uppercase tracking-[0.18em]">Template Clips</span>
+          </div>
+          <div className="w-8" />
+        </div>
+
+        {/* Tabs row similar to MOVIES / SERIES */}
+        <div className="flex items-center gap-6 mb-4 text-[11px] font-semibold uppercase tracking-[0.22em]">
+          <div className="relative pb-1 text-teal-300">
+            <span>All Clips</span>
+            <div className="absolute left-0 right-0 -bottom-0.5 h-[2px] rounded-full bg-teal-400" />
+          </div>
+          <div className="text-gray-500">Trending</div>
+        </div>
+
+        {/* 3-column grid */}
+        <div className="grid grid-cols-3 gap-3">
+          {loading ? (
+             Array.from({ length: 15 }).map((_, index) => (
+              <div key={index} className="w-full h-32 rounded-xl bg-gray-800 animate-pulse shadow-[0_18px_38px_rgba(0,0,0,0.85)]" />
+             ))
+          ) : (
+             templates.map((tmpl, index) => (
+              <motion.button
+                key={index}
+                type="button"
+                onClick={() => setActiveReelIndex(index)}
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                className="flex flex-col gap-1 text-left relative group"
+              >
+                <div className="w-full h-32 rounded-xl bg-gradient-to-b from-[#1f2937] to-[#020617] border border-gray-700/70 shadow-[0_18px_38px_rgba(0,0,0,0.85)] overflow-hidden flex items-center justify-center relative">
+                  <img src={tmpl.url} alt={tmpl.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
+                </div>
+                <div className="text-[10px] text-gray-300 font-medium truncate w-full">{tmpl.title}</div>
+                <div className="text-[9px] text-gray-500 truncate w-full flex items-center gap-1">
+                  <span>❤️ {tmpl.ups > 1000 ? (tmpl.ups/1000).toFixed(1)+'k' : tmpl.ups}</span>
+                </div>
+              </motion.button>
+             ))
+          )}
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {activeReelIndex !== null && (
+          <ReelsView 
+            memes={templates}
+            initialIndex={activeReelIndex}
+            onClose={() => setActiveReelIndex(null)}
+          />
+        )}
+      </AnimatePresence>
+    </>
   )
 }
 
@@ -852,49 +1108,29 @@ function FullCategoriesPage({ onBack, onSelectCategory }) {
   )
 }
 
-function BottomNav({ current, onChange, onOpenSheet }) {
+function BottomNav({ current, onChange }) {
   const items = [
-    { id: 'home', label: 'Home', icon: '🏠' },
-    { id: 'categories', label: 'Categories', icon: '🎭' },
-    { id: 'chat', label: 'Chat', icon: '💬' },
-    { id: 'saved', label: 'Saved', icon: '💾' },
-    { id: 'profile', label: 'Profile', icon: '👤' },
+    { id: 'home',       label: 'Home',     icon: '🏠' },
+    { id: 'explore',    label: 'Explore',   icon: '🔥' },
+    { id: 'categories', label: 'Templates', icon: '🎭' },
+    { id: 'chat',       label: 'Chat',      icon: '💬' },
+    { id: 'profile',    label: 'Profile',   icon: '👤' },
   ]
-
   return (
-    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[360px] bg-black/70 backdrop-blur-md rounded-2xl shadow-[0_18px_45px_rgba(0,0,0,0.8)] px-2 py-1.5 flex justify-between items-center border border-white/10 z-20">
+    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[370px] bg-black/75 backdrop-blur-xl rounded-2xl shadow-[0_18px_45px_rgba(0,0,0,0.85)] px-2 py-1.5 flex justify-between items-center border border-white/10 z-20">
       {items.map((it) => {
         const isActive = current === it.id
-
-        const handleClick = () => {
-          if (it.id === 'saved') {
-            onChange('saved')
-          } else {
-            onChange(it.id)
-          }
-        }
-
         return (
-          <button
-            key={it.id}
-            className="relative flex-1 flex items-center justify-center py-1"
-            onClick={handleClick}
-          >
+          <button key={it.id} className="relative flex-1 flex items-center justify-center py-1" onClick={() => onChange(it.id)}>
             {isActive && (
-              <motion.div
-                layoutId="nav-pill"
-                className="absolute inset-y-1 left-1 right-1 rounded-xl bg-gradient-to-r from-[#E50914] via-[#f97316] to-[#fde68a] opacity-25"
+              <motion.div layoutId="nav-pill"
+                className="absolute inset-y-1 left-0.5 right-0.5 rounded-xl bg-gradient-to-r from-[#E50914]/30 via-[#f97316]/20 to-[#fde68a]/10"
                 transition={{ type: 'spring', stiffness: 260, damping: 24 }}
               />
             )}
-
             <div className="relative flex flex-col items-center gap-0.5">
-              <span className={`text-base ${isActive ? 'text-white' : 'text-gray-400'}`}>
-                {it.icon}
-              </span>
-              <span className={`text-[10px] font-medium ${isActive ? 'text-white' : 'text-gray-500'}`}>
-                {it.label}
-              </span>
+              <span className={`text-base ${isActive ? 'text-white' : 'text-gray-500'}`}>{it.icon}</span>
+              <span className={`text-[9px] font-semibold tracking-wide ${isActive ? 'text-white' : 'text-gray-600'}`}>{it.label}</span>
             </div>
           </button>
         )
@@ -1011,16 +1247,95 @@ function LoginModal({ isOpen, onClose, onLogin, initialIsRegister = false }) {
   )
 }
 
+// ─── Explore / Trending Page ───────────────────────────────────────────────────
+function ExplorePage() {
+  const [memes, setMemes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [activeReelIdx, setActiveReelIdx] = useState(null)
+  const [filter, setFilter] = useState('hot')
+  const SUBS = { hot: 'memes', new: 'me_irl', top: 'dankmemes', trending: 'funny' }
+
+  useEffect(() => {
+    setLoading(true)
+    setMemes([])
+    fetch(`https://meme-api.com/gimme/${SUBS[filter]}/40`)
+      .then(r => r.json())
+      .then(d => { setMemes(d.memes || []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [filter])
+
+  return (
+    <>
+      <div className="px-4 pt-4 pb-28 overflow-y-auto no-scrollbar">
+        <h2 className="text-base font-black text-white mb-3 tracking-wide">🔥 Explore Trending</h2>
+
+        {/* Filter chips */}
+        <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">
+          {Object.keys(SUBS).map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest flex-shrink-0 border transition-all ${
+                filter === f
+                  ? 'bg-gradient-to-r from-pink-600 to-orange-500 text-white border-transparent shadow-lg shadow-pink-900/40'
+                  : 'bg-white/5 text-gray-400 border-white/10 hover:border-white/20'
+              }`}>
+              {f === 'hot' ? '🔥 Hot' : f === 'new' ? '✨ New' : f === 'top' ? '🏆 Top' : '📈 Trending'}
+            </button>
+          ))}
+        </div>
+
+        {/* Masonry-style 2-column grid */}
+        <div className="columns-2 gap-3 space-y-0">
+          {loading
+            ? Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="w-full mb-3 rounded-xl bg-gray-800 animate-pulse" style={{ height: i % 3 === 0 ? 180 : 130 }} />
+              ))
+            : memes.map((meme, i) => (
+                <motion.button
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setActiveReelIdx(i)}
+                  className="w-full mb-3 rounded-xl overflow-hidden relative group block text-left"
+                >
+                  <img src={meme.url} alt={meme.title}
+                    className="w-full object-cover rounded-xl transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent rounded-b-xl">
+                    <p className="text-white text-[9px] font-semibold line-clamp-2 leading-tight">{meme.title}</p>
+                    <span className="text-pink-400 text-[8px] font-bold">❤️ {meme.ups > 1000 ? (meme.ups/1000).toFixed(1)+'k' : meme.ups}</span>
+                  </div>
+                  {meme.ups > 10000 && (
+                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white text-[8px] font-black">🔥 HOT</span>
+                  )}
+                </motion.button>
+              ))
+          }
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {activeReelIdx !== null && (
+          <ReelsView memes={memes} initialIndex={activeReelIdx} onClose={() => setActiveReelIdx(null)} />
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+// ───────────────────────────────────────────────────────────────────────────────
+
 export default function DemoMobile() {
-  // screen: which main view is active inside the phone frame
-  const [screen, setScreen] = useState('home') // 'home' | 'categories' | 'categoryGrid' | 'chat' | 'saved' | 'audioGrid'
+  const [screen, setScreen] = useState('home')
   const [activeGridCategory, setActiveGridCategory] = useState(null)
   const [activeAudioClip, setActiveAudioClip] = useState(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [user, setUser] = useState(null)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [loginModalMode, setLoginModalMode] = useState(false) // false for login, true for signup
+  const [loginModalMode, setLoginModalMode] = useState(false)
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user')
@@ -1042,7 +1357,7 @@ export default function DemoMobile() {
   }
 
   const showSearchBar =
-    screen === 'home' || screen === 'categories' || screen === 'categoryGrid' || screen === 'audioGrid'
+    screen === 'home' || screen === 'explore' || screen === 'categories' || screen === 'categoryGrid' || screen === 'audioGrid'
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b0b0b] via-[#ff4500]/40 to-[#141414] flex items-start justify-center py-6 relative overflow-hidden">
@@ -1089,7 +1404,7 @@ export default function DemoMobile() {
             onOpenSignup={() => { setLoginModalMode(true); setIsLoginModalOpen(true); }}
             onOpenUpload={() => setIsUploadModalOpen(true)} 
           />
-          {showSearchBar && <SearchBarMobile />}
+          {showSearchBar && <SearchBarMobile onSearch={setSearchQuery} />}
 
           {screen === 'home' && (
             <>
@@ -1160,6 +1475,8 @@ export default function DemoMobile() {
             />
           )}
 
+          {screen === 'explore' && <ExplorePage />}
+
           {screen === 'chat' && <ChatScreen user={user} onRequireLogin={() => setIsLoginModalOpen(true)} />}
 
           {screen === 'saved' && (
@@ -1185,7 +1502,6 @@ export default function DemoMobile() {
       <BottomNav
         current={screen === 'categoryGrid' ? 'categories' : screen === 'audioGrid' ? 'home' : screen}
         onChange={setScreen}
-        onOpenSheet={() => setIsSheetOpen(true)}
       />
 
       <DownloadsSheet open={isSheetOpen} onClose={() => setIsSheetOpen(false)} />

@@ -43,3 +43,12 @@ body {
     transform: translate(30px, 20px);
   }
 }
+
+/* Hide scrollbar utility */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
