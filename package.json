@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite\" \"node api/src/server.cjs\"",
+    "dev": "concurrently \"vite\" \"node api/_src/server.cjs\"",
     "build": "vite build",
-    "start": "node api/src/server.cjs",
+    "start": "node api/_src/server.cjs",
     "preview": "vite preview"
   },
   "dependencies": {
