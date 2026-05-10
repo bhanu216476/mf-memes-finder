@@ -4,9 +4,9 @@
   "description": "Backend for Memes Finder",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "seed": "node seed.js"
+    "start": "node server.cjs",
+    "dev": "node server.cjs",
+    "seed": "node seed.cjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

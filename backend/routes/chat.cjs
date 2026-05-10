@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Chat = require('../models/Chat');
+const Chat = require('../models/Chat.cjs');
 
 // Get all chat messages
 router.get('/', async (req, res) => {

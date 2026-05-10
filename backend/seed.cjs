@@ -1,8 +1,8 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
-const Chat = require('./models/Chat');
-const Template = require('./models/Template');
-const Audio = require('./models/Audio');
+const Chat = require('./models/Chat.cjs');
+const Template = require('./models/Template.cjs');
+const Audio = require('./models/Audio.cjs');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/memesfinder';
 

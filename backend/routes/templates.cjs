@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Template = require('../models/Template');
+const Template = require('../models/Template.cjs');
 
 // Get all templates (or filter by categoryId)
 router.get('/', async (req, res) => {

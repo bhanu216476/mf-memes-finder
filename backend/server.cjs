@@ -21,10 +21,10 @@ if (MONGO_URI) {
 
 // Routes
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/templates', require('./routes/templates'));
-app.use('/api/audio', require('./routes/audio'));
-app.use('/api/chat', require('./routes/chat'));
+app.use('/api/auth', require('./routes/auth.cjs'));
+app.use('/api/templates', require('./routes/templates.cjs'));
+app.use('/api/audio', require('./routes/audio.cjs'));
+app.use('/api/chat', require('./routes/chat.cjs'));
 
 // Fallback for 404
 app.use('/api/*', (req, res) => res.status(404).json({ error: 'Endpoint not found' }));

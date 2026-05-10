@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Audio = require('../models/Audio');
+const Audio = require('../models/Audio.cjs');
 
 // Get all audios (or filter by packId)
 router.get('/', async (req, res) => {
