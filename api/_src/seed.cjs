@@ -101,22 +101,82 @@ const seedDB = async () => {
     ]);
     console.log('💬 Chat seeded');
 
-    // ── Seed Templates ───────────────────────────────────────────────────────
+    // ── Seed Templates (from live memes.co.in or fallback) ───────────────────
     const templates = [];
-    TEMPLATE_CATEGORIES.forEach(cat => {
-      const imgs = TEMPLATE_IMAGES[cat.id] || [];
-      for (let i = 1; i <= 6; i++) {
-        const imgSrc = imgs[i - 1] || cat.img;
-        templates.push({
-          title: `${cat.label} Template ${i}`,
-          categoryId: cat.id,
-          imgSrc,
-          isTrending: i <= 2,
+    const CATEGORIES = ['sunil', 'brahmi', 'ali', 'mohanlal', 'vk', 'satya'];
+
+    function getCategory(title, tags) {
+      const t = (title + ' ' + (tags || []).join(' ')).toLowerCase();
+      if (t.includes('sunil')) return 'sunil';
+      if (t.includes('brahmi') || t.includes('brahmanandam') || t.includes('chari')) return 'brahmi';
+      if (t.includes('ali')) return 'ali';
+      if (t.includes('mohanlal')) return 'mohanlal';
+      if (t.includes('vennela') || t.includes('kishore') || t.includes('vk ')) return 'vk';
+      if (t.includes('satya') || t.includes('sathya')) return 'satya';
+      return null;
+    }
+
+    try {
+      console.log('Fetching live Tollywood meme templates from memes.co.in...');
+      let rrIndex = 0;
+      for (let page = 1; page <= 3; page++) {
+        const url = `https://api.memes.co.in/api/content/filtered?category_id=168&content_type=memetemplate&page=${page}&page_size=100`;
+        const res = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          }
         });
+        if (res.status === 404) {
+          break; // Page doesn't exist, stop fetching
+        }
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        const data = await res.json();
+        const results = data.results || [];
+        if (results.length === 0) break;
+
+        for (const item of results) {
+          if (!item.image_path) continue;
+          const cleanTitle = item.title ? item.title.replace(' Template', '').replace(' Meme', '').trim() : 'Meme Template';
+          const imgUrl = `https://api.memes.co.in/media/${item.image_path}`;
+          
+          let catId = getCategory(item.title || '', item.tags_display || []);
+          if (!catId) {
+            catId = CATEGORIES[rrIndex % CATEGORIES.length];
+            rrIndex++;
+          }
+
+          templates.push({
+            title: cleanTitle,
+            categoryId: catId,
+            imgSrc: imgUrl,
+            isTrending: item.no_of_views > 500
+          });
+        }
       }
-    });
-    await Template.insertMany(templates);
-    console.log(`🖼️  Templates seeded: ${templates.length} entries`);
+    } catch (err) {
+      console.warn('⚠️ Could not fetch live Tollywood templates, using fallback:', err.message);
+    }
+
+    if (templates.length > 0) {
+      await Template.insertMany(templates);
+      console.log(`🖼️  Templates seeded: ${templates.length} real Tollywood entries from memes.co.in`);
+    } else {
+      TEMPLATE_CATEGORIES.forEach(cat => {
+        const imgs = TEMPLATE_IMAGES[cat.id] || [];
+        for (let i = 1; i <= 6; i++) {
+          const imgSrc = imgs[i - 1] || cat.img;
+          templates.push({
+            title: `${cat.label} Template ${i}`,
+            categoryId: cat.id,
+            imgSrc,
+            isTrending: i <= 2,
+          });
+        }
+      });
+      await Template.insertMany(templates);
+      console.log(`🖼️  Templates seeded: ${templates.length} fallback dummy entries`);
+    }
+
 
     // ── Seed Audio (from live TMS data or fallback) ─────────────────────────
     if (liveAudios.length > 0) {
