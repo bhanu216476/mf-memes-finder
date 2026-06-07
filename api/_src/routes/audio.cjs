@@ -53,6 +53,45 @@ router.get('/trending', async (req, res) => {
   }
 });
 
+// GET /api/audio/packs  — return top audio category packs for homepage grid
+router.get('/packs', async (req, res) => {
+  try {
+    const packs = await Audio.aggregate([
+      { $unwind: '$categories' },
+      {
+        $group: {
+          _id: '$categories.slug',
+          name: { $first: '$categories.name' },
+          imageUrl: { $first: '$categories.imageUrl' },
+          thumbnailUrl: { $first: '$thumbnailUrl' },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 12 },
+    ]);
+    // Fallback: if no categories in db, return packId-based groups
+    if (packs.length === 0) {
+      const byPack = await Audio.aggregate([
+        {
+          $group: {
+            _id: '$packId',
+            thumbnailUrl: { $first: '$thumbnailUrl' },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 12 },
+      ]);
+      return res.json({ success: true, data: byPack.map(p => ({ _id: p._id, name: p._id, thumbnailUrl: p.thumbnailUrl, count: p.count })) });
+    }
+    res.json({ success: true, data: packs });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // GET /api/audio/categories  — distinct categories
 router.get('/categories', async (req, res) => {
   try {

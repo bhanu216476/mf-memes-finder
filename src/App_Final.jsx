@@ -36,6 +36,109 @@ const AUDIO_CLIPS = [
   { id: 'audio6', label: 'Random Pack' },
 ]
 
+// AudioClipsMobile — fetches real audio packs from backend
+function AudioClipsMobile({ onSelectAudio }) {
+  const [packs, setPacks] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/audio/packs`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.data && d.data.length > 0) {
+          setPacks(d.data.slice(0, 6))
+        } else {
+          // Fallback to static clips if API returns nothing
+          setPacks(AUDIO_CLIPS.map(c => ({ _id: c.id, name: c.label, thumbnailUrl: '', count: 0 })))
+        }
+        setLoading(false)
+      })
+      .catch(() => {
+        setPacks(AUDIO_CLIPS.map(c => ({ _id: c.id, name: c.label, thumbnailUrl: '', count: 0 })))
+        setLoading(false)
+      })
+  }, [])
+
+  const waveColors = ['#22d3ee', '#f472b6', '#4ade80', '#fb923c', '#a78bfa', '#facc15']
+
+  if (loading) {
+    return (
+      <div className="px-4 mt-3">
+        <div className="grid grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex flex-col items-center gap-2">
+              <div className="w-16 h-16 rounded-full bg-gray-800/60 animate-pulse" />
+              <div className="w-14 h-2 rounded bg-gray-800/60 animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="px-4 mt-3">
+      <div className="grid grid-cols-3 gap-4">
+        {packs.map((pack, i) => {
+          const color = waveColors[i % waveColors.length]
+          return (
+            <motion.button
+              key={pack._id}
+              type="button"
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.93 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 18 }}
+              onClick={() => onSelectAudio({ id: pack._id, label: pack.name || pack._id })}
+              className="flex flex-col items-center gap-2 group"
+            >
+              <div
+                className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 relative"
+                style={{
+                  background: `radial-gradient(circle at 40% 40%, ${color}22, #020617)`,
+                  boxShadow: `0 0 20px ${color}55`,
+                  border: `1.5px solid ${color}55`,
+                }}
+              >
+                {pack.thumbnailUrl || pack.imageUrl ? (
+                  <img
+                    src={pack.thumbnailUrl || pack.imageUrl}
+                    alt={pack.name}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-row items-center justify-center gap-[3px]">
+                    {/* Mini waveform bars */}
+                    {[3, 5, 7, 5, 3].map((h, bi) => (
+                      <motion.div
+                        key={bi}
+                        className="rounded-full"
+                        style={{ background: color, width: 3, height: h * 3 }}
+                        animate={{ scaleY: [1, 1.8, 1] }}
+                        transition={{ duration: 0.9 + bi * 0.1, repeat: Infinity, ease: 'easeInOut', delay: bi * 0.12 }}
+                      />
+                    ))}
+                  </div>
+                )}
+                {/* Glow overlay */}
+                <div
+                  className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{ background: `radial-gradient(circle, ${color}30, transparent 70%)` }}
+                />
+              </div>
+              <div className="text-[11px] text-gray-300 text-center leading-tight truncate w-16">
+                {pack.name || pack._id}
+              </div>
+              {pack.count > 0 && (
+                <div className="text-[9px] text-gray-500 -mt-1">{pack.count} clips</div>
+              )}
+            </motion.button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function Logo() {
   return (
     <motion.div
@@ -1994,39 +2097,32 @@ export default function DemoMobile() {
 
               {/* Audio Clips heading */}
               <div className="px-4 mt-5">
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, ease: 'easeOut' }}
-                >
-                  <h3 className="text-sm font-semibold text-gray-200">Audio Clips</h3>
+                <div className="flex items-start justify-between mb-0">
                   <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: '40%' }}
-                    transition={{ duration: 0.6, ease: 'easeOut' }}
-                    className="h-[2px] mt-1 rounded-full bg-gradient-to-r from-[#22d3ee] via-[#67e8f9] to-transparent"
-                  />
-                </motion.div>
-              </div>
-
-              {/* Audio Clips icons */}
-              <div className="px-4 mt-3">
-                <div className="grid grid-cols-3 gap-4">
-                  {AUDIO_CLIPS.map((clip) => (
-                    <button
-                      key={clip.id}
-                      type="button"
-                      onClick={() => handleSelectAudio(clip)}
-                      className="flex flex-col items-center gap-2 group"
-                    >
-                      <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#020617] to-black border border-white/10 flex items-center justify-center shadow-[0_8px_24px_rgba(34,211,238,0.4)]">
-                        <span className="text-xs text-cyan-200">▶</span>
-                      </div>
-                      <div className="text-[11px] text-gray-300 text-center">{clip.label}</div>
-                    </button>
-                  ))}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                  >
+                    <h3 className="text-sm font-semibold text-gray-200">Audio Sessions</h3>
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: '100%' }}
+                      transition={{ duration: 0.6, ease: 'easeOut' }}
+                      className="h-[2px] mt-1 rounded-full bg-gradient-to-r from-[#22d3ee] via-[#67e8f9] to-transparent"
+                    />
+                  </motion.div>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectAudio({ id: 'all', label: 'All Audio' })}
+                    className="text-xs text-gray-400 hover:text-cyan-300 transition"
+                  >
+                    See all
+                  </button>
                 </div>
               </div>
+
+              {/* Audio Clips — real data from backend */}
+              <AudioClipsMobile onSelectAudio={handleSelectAudio} />
 
               <BestEditsMobile />
             </>
