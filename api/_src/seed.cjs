@@ -23,13 +23,64 @@ try {
 
 // ─── Fallback / template data ─────────────────────────────────────────────────
 const TEMPLATE_CATEGORIES = [
-  { id: 'sunil',    label: 'Sunil',      img: 'https://i.postimg.cc/tC1YN2FC/Whats-App-Image-2025-11-25-at-14-37-13-adbd1118.jpg' },
-  { id: 'brahmi',   label: 'Brahmi',     img: 'https://i.postimg.cc/tC1YN2FC/Whats-App-Image-2025-11-25-at-14-37-13-adbd1118.jpg' },
-  { id: 'ali',      label: 'Ali',        img: 'https://i.postimg.cc/tC1YN2FC/Whats-App-Image-2025-11-25-at-14-37-13-adbd1118.jpg' },
-  { id: 'mohanlal', label: 'Mohanlal',   img: 'https://i.postimg.cc/tC1YN2FC/Whats-App-Image-2025-11-25-at-14-37-13-adbd1118.jpg' },
-  { id: 'vk',       label: 'VK',         img: 'https://i.postimg.cc/tC1YN2FC/Whats-App-Image-2025-11-25-at-14-37-13-adbd1118.jpg' },
-  { id: 'satya',    label: 'Satya',      img: 'https://i.postimg.cc/tC1YN2FC/Whats-App-Image-2025-11-25-at-14-37-13-adbd1118.jpg' },
+  { id: 'sunil',    label: 'Sunil',      img: 'https://i.postimg.cc/YG2PHpMQ/Whats-App-Image-2025-12-07-at-09-56-54-2a90bedc.jpg' },
+  { id: 'brahmi',   label: 'Brahmi',     img: 'https://i.postimg.cc/Mnxb49Wk/Whats-App-Image-2025-12-07-at-09-56-52-4f67f9f0.jpg' },
+  { id: 'ali',      label: 'Ali',        img: 'https://i.postimg.cc/HrpX3j2T/Whats-App-Image-2025-12-07-at-09-56-52-d056fb73.jpg' },
+  { id: 'mohanlal', label: 'Mohanlal',   img: 'https://i.postimg.cc/WFJktZNp/Whats-App-Image-2025-12-07-at-09-56-53-e33a55c6.jpg' },
+  { id: 'vk',       label: 'VK',         img: 'https://i.postimg.cc/HrZc2znR/Whats-App-Image-2025-12-07-at-09-56-53-eaf5d238.jpg' },
+  { id: 'satya',    label: 'Satya',      img: 'https://i.postimg.cc/rz1DbMzf/Whats-App-Image-2025-12-07-at-09-56-54-32f0e1b4.jpg' },
 ];
+
+const TEMPLATE_IMAGES = {
+  sunil: [
+    'https://i.postimg.cc/YG2PHpMQ/Whats-App-Image-2025-12-07-at-09-56-54-2a90bedc.jpg',
+    'https://files.telugumemesounds.com/images/sunil.jpeg',
+    'https://files.telugumemesounds.com/images/venu-madhav.jpeg',
+    'https://files.telugumemesounds.com/images/dharmavarapu.jpeg',
+    'https://files.telugumemesounds.com/images/vennela-kishore.jpeg',
+    'https://files.telugumemesounds.com/images/allu-arjun.jpeg',
+  ],
+  brahmi: [
+    'https://i.postimg.cc/Mnxb49Wk/Whats-App-Image-2025-12-07-at-09-56-52-4f67f9f0.jpg',
+    'https://files.telugumemesounds.com/images/meme-god.jpeg',
+    'https://files.telugumemesounds.com/images/bala-krishna.jpeg',
+    'https://files.telugumemesounds.com/images/chiranjeevi.jpeg',
+    'https://files.telugumemesounds.com/images/mahesh-babu.jpeg',
+    'https://files.telugumemesounds.com/images/pawan-kalyan.jpeg',
+  ],
+  ali: [
+    'https://i.postimg.cc/HrpX3j2T/Whats-App-Image-2025-12-07-at-09-56-52-d056fb73.jpg',
+    'https://files.telugumemesounds.com/images/ali.jpeg',
+    'https://files.telugumemesounds.com/images/ravi-teja.jpeg',
+    'https://files.telugumemesounds.com/images/ntr.jpeg',
+    'https://files.telugumemesounds.com/images/prabhas.jpeg',
+    'https://files.telugumemesounds.com/images/samantha.jpeg',
+  ],
+  mohanlal: [
+    'https://i.postimg.cc/WFJktZNp/Whats-App-Image-2025-12-07-at-09-56-53-e33a55c6.jpg',
+    'https://files.telugumemesounds.com/images/venkatesh.jpeg',
+    'https://files.telugumemesounds.com/images/nagarjuna.jpeg',
+    'https://files.telugumemesounds.com/images/sunil.jpeg',
+    'https://files.telugumemesounds.com/images/ali.jpeg',
+    'https://files.telugumemesounds.com/images/meme-god.jpeg',
+  ],
+  vk: [
+    'https://i.postimg.cc/HrZc2znR/Whats-App-Image-2025-12-07-at-09-56-53-eaf5d238.jpg',
+    'https://files.telugumemesounds.com/images/venkatesh.jpeg',
+    'https://files.telugumemesounds.com/images/bala-krishna.jpeg',
+    'https://files.telugumemesounds.com/images/allu-arjun.jpeg',
+    'https://files.telugumemesounds.com/images/mahesh-babu.jpeg',
+    'https://files.telugumemesounds.com/images/pawan-kalyan.jpeg',
+  ],
+  satya: [
+    'https://i.postimg.cc/rz1DbMzf/Whats-App-Image-2025-12-07-at-09-56-54-32f0e1b4.jpg',
+    'https://files.telugumemesounds.com/images/venu-madhav.jpeg',
+    'https://files.telugumemesounds.com/images/dharmavarapu.jpeg',
+    'https://files.telugumemesounds.com/images/vennela-kishore.jpeg',
+    'https://files.telugumemesounds.com/images/ravi-teja.jpeg',
+    'https://files.telugumemesounds.com/images/prabhas.jpeg',
+  ],
+};
 
 const seedDB = async () => {
   try {
@@ -53,11 +104,13 @@ const seedDB = async () => {
     // ── Seed Templates ───────────────────────────────────────────────────────
     const templates = [];
     TEMPLATE_CATEGORIES.forEach(cat => {
+      const imgs = TEMPLATE_IMAGES[cat.id] || [];
       for (let i = 1; i <= 6; i++) {
+        const imgSrc = imgs[i - 1] || cat.img;
         templates.push({
           title: `${cat.label} Template ${i}`,
           categoryId: cat.id,
-          imgSrc: cat.img,
+          imgSrc,
           isTrending: i <= 2,
         });
       }

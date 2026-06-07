@@ -498,32 +498,30 @@ function SavedPage({ onBack }) {
       </p>
 
       <div className="grid grid-cols-2 gap-4">
-        <SavedCard icon="📁" title="Saved Templates" accent="[#22c55e]" />
-        <SavedCard icon="🎵" title="Saved Audios" accent="[#38bdf8]" />
-        <SavedCard icon="🔥" title="Trending Pages" accent="[#f472b6]" />
-        <SavedCard icon="🏆" title="Score" accent="[#facc15]" />
+        <SavedCard icon="📁" title="Saved Templates" accent="[#22c55e]" subtitle="6 templates" />
+        <SavedCard icon="🎵" title="Saved Audios" accent="[#38bdf8]" subtitle="12 clips" />
+        <SavedCard icon="🔥" title="Trending Pages" accent="[#f472b6]" subtitle="3 creators" />
+        <SavedCard icon="🏆" title="Premium Rating" accent="[#facc15]" subtitle="Active account" />
       </div>
     </div>
   )
 }
 
-function SavedCard({ icon, title, accent }) {
+function SavedCard({ icon, title, accent, subtitle }) {
   return (
     <motion.div
       role="button"
       whileTap={{ scale: 0.94 }}
-      animate={{ opacity: [1, 0.25, 1] }}
-      transition={{ duration: 0.25 }}
       className={`rounded-2xl p-4 h-32 bg-gradient-to-br from-[#0f172a] to-[#020617] border border-${accent}/40 shadow-[0_10px_30px_rgba(0,0,0,0.6)] flex flex-col justify-center`}
     >
       <div className="text-2xl">{icon}</div>
       <div className="text-sm font-semibold text-gray-100 mt-2">{title}</div>
-      <div className="text-xs text-gray-400 mt-1">Wireframe view</div>
+      <div className="text-xs text-gray-400 mt-1">{subtitle}</div>
     </motion.div>
   )
 }
 
-function ProfilePage({ user, onLogout }) {
+function ProfilePage({ user, onNavigate, onOpenDownloads, onLogout }) {
   if (!user) {
     return (
       <div className="px-4 py-20 flex flex-col items-center text-center">
@@ -546,10 +544,35 @@ function ProfilePage({ user, onLogout }) {
           <div className="text-xs text-gray-500 uppercase tracking-wider">Member</div>
         </div>
       </div>
+
+      {/* Profile actions list */}
+      <div className="flex flex-col gap-3 mb-6">
+        <button
+          onClick={() => onNavigate('saved')}
+          className="w-full flex items-center justify-between px-5 py-4 bg-[#141414] border border-gray-800 hover:border-gray-700 rounded-xl transition text-left"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">🔖</span>
+            <span className="text-sm font-semibold text-gray-200">Saved Items</span>
+          </div>
+          <span className="text-gray-500">→</span>
+        </button>
+
+        <button
+          onClick={onOpenDownloads}
+          className="w-full flex items-center justify-between px-5 py-4 bg-[#141414] border border-gray-800 hover:border-gray-700 rounded-xl transition text-left"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">⬇️</span>
+            <span className="text-sm font-semibold text-gray-200">Downloads</span>
+          </div>
+          <span className="text-gray-500">→</span>
+        </button>
+      </div>
       
       <button 
         onClick={onLogout}
-        className="w-full bg-gray-800 text-white font-semibold rounded-xl py-4 hover:bg-red-900/40 transition-colors border border-gray-700"
+        className="w-full bg-gray-900 text-white font-semibold rounded-xl py-4 hover:bg-red-950/40 hover:text-red-400 hover:border-red-900 transition-colors border border-gray-800"
       >
         Log Out
       </button>
@@ -1055,11 +1078,17 @@ function CategoryGridPage({ category, onBack }) {
 
   useEffect(() => {
     setLoading(true)
-    // Fetch 50 memes from public API to replace broken backend
-    fetch(`https://meme-api.com/gimme/50`)
+    fetch(`${API_BASE}/api/templates?categoryId=${category.id}&limit=50`)
       .then(res => res.json())
       .then(data => {
-        setTemplates(data.memes || [])
+        const mapped = (data.data || []).map((t) => ({
+          ...t,
+          url: t.imgSrc, // map to url for ReelsView & card preview
+          ups: t.isTrending ? Math.floor(Math.random() * 4000) + 4000 : Math.floor(Math.random() * 800) + 120,
+          author: category.label ? category.label.replace(' Templates', '') : 'Memes Finder',
+          subreddit: 'TeluguMemes'
+        }))
+        setTemplates(mapped)
         setLoading(false)
       })
       .catch(err => {
@@ -1428,10 +1457,8 @@ function ChatScreen({ user, onRequireLogin }) {
 }
 
 function FullCategoriesPage({ onBack, onSelectCategory }) {
-  const placeholders = Array.from({ length: 12 })
-
   return (
-    <div className="px-4 pt-4 pb-6">
+    <div className="px-4 pt-4 pb-28">
       <div className="flex items-center justify-between mb-4">
         <motion.button
           type="button"
@@ -1445,36 +1472,37 @@ function FullCategoriesPage({ onBack, onSelectCategory }) {
         >
           <span className="text-[28px] font-extrabold leading-none">←</span>
         </motion.button>
-        <h2 className="text-sm font-semibold text-gray-100 tracking-wide">All Templates</h2>
+        <h2 className="text-sm font-semibold text-gray-100 tracking-wide">All Actor Packs</h2>
         <div className="w-8" />
       </div>
 
-      {/* Top tabs like MOVIES / SERIES style (wireframe only) */}
-      <div className="flex items-center gap-6 mb-4 text-[11px] font-semibold uppercase tracking-[0.2em]">
+      {/* Top tabs */}
+      <div className="flex items-center gap-6 mb-5 text-[11px] font-semibold uppercase tracking-[0.2em]">
         <div className="relative pb-1 text-teal-300">
-          <span>VIDEO</span>
+          <span>VIDEO CLIPS</span>
           <div className="absolute left-0 right-0 -bottom-0.5 h-[2px] rounded-full bg-teal-400" />
         </div>
-        <div className="text-gray-500">AUDIO</div>
+        <div className="text-gray-500 font-medium tracking-wide">AUDIO MEMES</div>
       </div>
 
-      {/* 3-column wireframe grid, empty slots */}
+      {/* 3-column category grid */}
       <div className="grid grid-cols-3 gap-3">
-        {placeholders.map((_, index) => (
-          <button
-            key={index}
+        {CATEGORIES.map((cat) => (
+          <motion.button
+            key={cat.id}
             type="button"
-            onClick={() => onSelectCategory && onSelectCategory(CATEGORIES[index % CATEGORIES.length])}
-            className="flex flex-col gap-1"
+            onClick={() => onSelectCategory && onSelectCategory(cat)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex flex-col gap-1.5 text-left group"
           >
-            <div className="w-full h-32 rounded-xl bg-gradient-to-b from-[#1f2933] to-[#111827] border border-gray-700/70 shadow-[0_18px_38px_rgba(0,0,0,0.85)] overflow-hidden flex items-center justify-center">
-              <div className="w-10 h-10 rounded-full border border-gray-500/60 flex items-center justify-center text-xs text-gray-400">
-                +
-              </div>
+            <div className="w-full h-28 rounded-xl bg-gradient-to-b from-[#1f2937] to-[#020617] border border-gray-700/60 shadow-[0_18px_38px_rgba(0,0,0,0.85)] overflow-hidden flex items-center justify-center relative">
+              <img src={cat.imgSrc} alt={cat.label} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
             </div>
-            <div className="text-[10px] text-gray-300 font-medium truncate">Empty Slot</div>
-            <div className="text-[9px] text-gray-500 truncate">Tap to assign stakeholder</div>
-          </button>
+            <div className="text-[10px] text-gray-300 font-semibold truncate w-full">{cat.label.replace(' Templates', '')}</div>
+            <div className="text-[9px] text-gray-500 truncate w-full">6 templates</div>
+          </motion.button>
         ))}
       </div>
     </div>
@@ -2035,7 +2063,9 @@ export default function DemoMobile() {
 
           {screen === 'profile' && (
             <ProfilePage 
-              user={user} 
+              user={user}
+              onNavigate={setScreen}
+              onOpenDownloads={() => setIsSheetOpen(true)}
               onLogout={() => {
                 authLogout()
                 setUser(null)
