@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import MemeEditor from './components/MemeEditor.jsx'
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
 /*
   MF — Memes Finder Preview (Dark / Netflix-like theme)
   + Navigation, Modal, Bottom Sheet, Category Grid, Chat
@@ -637,18 +639,54 @@ function DownloadsSheet({ open, onClose }) {
 
 function AudioGridPage({ audio, onBack }) {
   const [audiosList, setAudiosList] = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [searchQ, setSearchQ]       = useState('')
+  const [activeTab, setActiveTab]   = useState('all')
+  const [playingId, setPlayingId]   = useState(null)
+  const audioRef = useRef(null)
 
-  useEffect(() => {
-    fetch(`https://mf-memes-finder-backend.onrender.com/api/audio?packId=` + audio.id)
+  const fetchAudios = useCallback((tab, q) => {
+    setLoading(true)
+    let url = `${API_BASE}/api/audio?limit=30`
+    if (tab === 'trending') url += '&trending=true'
+    if (q) url += `&search=${encodeURIComponent(q)}`
+    fetch(url)
       .then(res => res.json())
-      .then(data => setAudiosList(data))
-      .catch(err => console.error(err))
-  }, [audio])
+      .then(data => { setAudiosList(data.data || []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
 
-  const slots = Array.from({ length: 12 })
+  useEffect(() => { fetchAudios(activeTab, searchQ) }, [audio, activeTab])
+
+  const handleSearch = (e) => {
+    setSearchQ(e.target.value)
+    fetchAudios(activeTab, e.target.value)
+  }
+
+  const handlePlay = (track) => {
+    if (!track.audioUrl) return
+    if (playingId === track._id) {
+      audioRef.current?.pause()
+      setPlayingId(null)
+      return
+    }
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = track.audioUrl
+      audioRef.current.play().catch(() => {})
+    }
+    setPlayingId(track._id)
+    // Increment play count
+    fetch(`${API_BASE}/api/audio/${track._id}/play`, { method: 'PATCH' }).catch(() => {})
+  }
+
+  const fmtCount = (n) => n > 1000 ? (n/1000).toFixed(1)+'k' : n
 
   return (
     <div className="px-4 pt-4 pb-6">
+      {/* Hidden audio element */}
+      <audio ref={audioRef} onEnded={() => setPlayingId(null)} />
+
       <div className="flex items-center justify-between mb-4">
         <motion.button
           type="button"
@@ -671,50 +709,99 @@ function AudioGridPage({ audio, onBack }) {
         <div className="w-8" />
       </div>
 
-      {/* Tabs row for audio */}
-      <div className="flex items-center gap-6 mb-4 text-[11px] font-semibold uppercase tracking-[0.22em]">
-        <div className="relative pb-1 text-cyan-300">
-          <span>All Audios</span>
-          <div className="absolute left-0 right-0 -bottom-0.5 h-[2px] rounded-full bg-cyan-400" />
-        </div>
-        <div className="text-gray-500">Trending</div>
+      {/* Search bar */}
+      <div className="relative mb-3">
+        <input
+          value={searchQ}
+          onChange={handleSearch}
+          placeholder="Search audio..."
+          className="w-full bg-[#141414] border border-gray-700 rounded-xl px-3 py-2 text-xs text-gray-200 outline-none focus:border-cyan-500 pr-8"
+        />
+        {searchQ && (
+          <button onClick={() => { setSearchQ(''); fetchAudios(activeTab, '') }}
+            className="absolute right-2 top-2 text-gray-500 hover:text-white text-xs">
+            ✕
+          </button>
+        )}
       </div>
 
-      {/* Audio list wireframe (rows) */}
+      {/* Tabs */}
+      <div className="flex items-center gap-6 mb-4 text-[11px] font-semibold uppercase tracking-[0.22em]">
+        {['all', 'trending'].map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab)}
+            className={`relative pb-1 transition-colors ${
+              activeTab === tab ? 'text-cyan-300' : 'text-gray-500 hover:text-gray-300'
+            }`}>
+            <span>{tab === 'all' ? 'All Audios' : '🔥 Trending'}</span>
+            {activeTab === tab && (
+              <motion.div layoutId="audio-tab-underline"
+                className="absolute left-0 right-0 -bottom-0.5 h-[2px] rounded-full bg-cyan-400" />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Audio list */}
       <div className="mt-2 space-y-3">
-        {slots.map((_, index) => {
-          const track = audiosList[index];
-          return (
-          <motion.div
-            key={index}
-            whileHover={{ scale: 1.01, y: -1 }}
-            whileTap={{ scale: 0.97 }}
-            className="w-full rounded-xl bg-[#020617] border border-cyan-900/70 shadow-[0_14px_38px_rgba(8,47,73,0.85)] px-3 py-2.5 flex items-center gap-3"
-          >
-            {/* left icon square */}
-            <div className="w-10 h-10 rounded-md bg-gradient-to-br from-[#0f172a] via-[#020617] to-black flex items-center justify-center text-gray-300 text-lg">
-              ♫
-            </div>
-
-            {/* middle: title + duration */}
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-semibold text-gray-100 truncate">
-                {track ? track.title : `0${index + 1} - Audio Clip Name ..`}
-              </div>
-              <div className="text-[10px] text-cyan-300 mt-0.5">
-                {track ? track.duration : `0${index}:${index === 0 ? '27' : '3' + index}`}
-              </div>
-            </div>
-
-            {/* right download button */}
-            <button
-              type="button"
-              className="ml-2 w-9 h-9 rounded-xl bg-[#06b6d4] flex items-center justify-center text-base font-bold text-black shadow-[0_10px_28px_rgba(6,182,212,0.8)]"
+        {loading ? (
+          Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="w-full h-16 rounded-xl bg-gray-800/50 animate-pulse" />
+          ))
+        ) : audiosList.length === 0 ? (
+          <div className="text-center text-gray-500 text-sm py-10">No audios found</div>
+        ) : (
+          audiosList.map((track) => (
+            <motion.div
+              key={track._id}
+              whileHover={{ scale: 1.01, y: -1 }}
+              className="w-full rounded-xl bg-[#020617] border border-cyan-900/70 shadow-[0_14px_38px_rgba(8,47,73,0.85)] px-3 py-2.5 flex items-center gap-3 relative overflow-hidden"
             >
-              ⬇
-            </button>
-          </motion.div>
-        )})}
+              {/* Thumbnail */}
+              <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#0f172a] to-black border border-white/10">
+                {track.thumbnailUrl ? (
+                  <img src={track.thumbnailUrl} alt={track.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">♫</div>
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold text-gray-100 truncate">{track.title}</div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  {track.isTrending && (
+                    <span className="text-[9px] text-orange-400 font-bold">🔥</span>
+                  )}
+                  <span className="text-[10px] text-cyan-300">{fmtCount(track.playCount)} plays</span>
+                  {track.shareCount > 0 && (
+                    <span className="text-[10px] text-gray-500">{fmtCount(track.shareCount)} shares</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Play button */}
+              <motion.button
+                whileTap={{ scale: 0.88 }}
+                onClick={() => handlePlay(track)}
+                className={`w-9 h-9 rounded-xl flex items-center justify-center text-base font-bold shadow-lg flex-shrink-0 ${
+                  playingId === track._id
+                    ? 'bg-orange-500 text-white shadow-orange-500/40 animate-pulse'
+                    : 'bg-[#06b6d4] text-black shadow-cyan-500/40'
+                }`}
+              >
+                {playingId === track._id ? '⏸' : '▶'}
+              </motion.button>
+
+              {/* Download */}
+              {track.audioUrl && (
+                <a href={track.audioUrl} download target="_blank" rel="noreferrer"
+                  className="w-9 h-9 rounded-xl bg-white/8 border border-white/10 flex items-center justify-center text-sm text-gray-300 hover:text-white flex-shrink-0">
+                  ⬇
+                </a>
+              )}
+            </motion.div>
+          ))
+        )}
       </div>
     </div>
   )
@@ -1988,7 +2075,7 @@ function UploadModal({ isOpen, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const res = await fetch(`https://mf-memes-finder-backend.onrender.com/api/templates/upload`, {
+      const res = await fetch(`${API_BASE}/api/templates/upload`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, categoryId, imgSrc })

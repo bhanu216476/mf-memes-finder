@@ -7,7 +7,8 @@
     "dev": "concurrently \"vite\" \"node api/_src/server.cjs\"",
     "build": "vite build",
     "start": "node api/_src/server.cjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed": "node api/_src/seed.cjs"
   },
   "dependencies": {
     "framer-motion": "^11.15.0",
