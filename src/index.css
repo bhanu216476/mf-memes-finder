@@ -52,3 +52,24 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Best Edits video player — invisible range input on progress bar */
+.best-edits-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+.best-edits-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 1px;
+  height: 1px;
+  background: transparent;
+}
+.best-edits-range::-moz-range-thumb {
+  width: 1px;
+  height: 1px;
+  background: transparent;
+  border: none;
+}

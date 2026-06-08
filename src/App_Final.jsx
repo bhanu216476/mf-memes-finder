@@ -470,7 +470,7 @@ function CategoriesMobile({ onSeeAll, onSelectCategory }) {
               transition={{ duration: 0.4, ease: 'easeOut' }}
               className="text-xs text-gray-400 inline-block"
             >
-              Video clips
+              Templates
             </motion.span>
             <motion.div
               initial={{ width: 0 }}
@@ -520,59 +520,420 @@ function CategoriesMobile({ onSeeAll, onSelectCategory }) {
   )
 }
 
-function BestEditsMobile() {
-  const slides = new Array(6).fill(null)
-  const [index, setIndex] = useAutoplay(slides.length, 3600)
+// ─── Best Edits Video Slider ────────────────────────────────────────────────
+const BEST_EDITS_VIDEOS = [
+  { id: 'vik1', src: '/vik1.mp4', title: 'VIK Edit #1' },
+  { id: 'vik2', src: '/vik2.mp4', title: 'VIK Edit #2' },
+  { id: 'vik3', src: '/vik3.mp4', title: 'VIK Edit #3' },
+]
+
+function VideoPlayerOverlay({ video, onClose }) {
+  const videoRef = useRef(null)
+  const [playing, setPlaying] = useState(false)
+  const [muted, setMuted] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [showControls, setShowControls] = useState(true)
+  const controlsTimerRef = useRef(null)
+
+  useEffect(() => {
+    const vid = videoRef.current
+    if (!vid) return
+    vid.play().then(() => setPlaying(true)).catch(() => {})
+    const onTimeUpdate = () => {
+      setProgress((vid.currentTime / (vid.duration || 1)) * 100)
+      setCurrentTime(vid.currentTime)
+    }
+    const onLoaded = () => setDuration(vid.duration || 0)
+    const onEnded = () => setPlaying(false)
+    vid.addEventListener('timeupdate', onTimeUpdate)
+    vid.addEventListener('loadedmetadata', onLoaded)
+    vid.addEventListener('ended', onEnded)
+    return () => {
+      vid.removeEventListener('timeupdate', onTimeUpdate)
+      vid.removeEventListener('loadedmetadata', onLoaded)
+      vid.removeEventListener('ended', onEnded)
+      vid.pause()
+    }
+  }, [video])
+
+  const resetControlsTimer = () => {
+    setShowControls(true)
+    clearTimeout(controlsTimerRef.current)
+    controlsTimerRef.current = setTimeout(() => setShowControls(false), 2800)
+  }
+
+  const togglePlay = () => {
+    const vid = videoRef.current
+    if (!vid) return
+    resetControlsTimer()
+    if (vid.paused) { vid.play(); setPlaying(true) }
+    else { vid.pause(); setPlaying(false) }
+  }
+
+  const handleSeek = (e) => {
+    const vid = videoRef.current
+    if (!vid || !vid.duration) return
+    const val = Number(e.target.value)
+    vid.currentTime = (val / 100) * vid.duration
+    setProgress(val)
+    resetControlsTimer()
+  }
+
+  const toggleMute = () => {
+    const vid = videoRef.current
+    if (!vid) return
+    vid.muted = !vid.muted
+    setMuted(vid.muted)
+    resetControlsTimer()
+  }
+
+  const handleFullscreen = () => {
+    const vid = videoRef.current
+    if (!vid) return
+    if (vid.requestFullscreen) vid.requestFullscreen()
+    else if (vid.webkitRequestFullscreen) vid.webkitRequestFullscreen()
+    resetControlsTimer()
+  }
+
+  const fmtTime = (s) => {
+    if (!s || isNaN(s)) return '0:00'
+    const m = Math.floor(s / 60)
+    const sec = Math.floor(s % 60)
+    return `${m}:${sec.toString().padStart(2, '0')}`
+  }
 
   return (
-    <div className="px-4 mt-4">
-      <div className="w-full h-44 rounded-xl overflow-hidden bg-gradient-to-br from-[#020617] via-[#111827] to-[#020617] shadow-[0_20px_60px_rgba(0,0,0,0.85)] border border-indigo-500/30 relative">
-        <AnimatePresence initial={false}>
+    <motion.div
+      className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center"
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.97 }}
+      transition={{ duration: 0.28, ease: 'easeOut' }}
+      onClick={togglePlay}
+      onMouseMove={resetControlsTimer}
+      onTouchStart={resetControlsTimer}
+    >
+      {/* Video */}
+      <video
+        ref={videoRef}
+        src={video.src}
+        className="w-full h-full object-contain"
+        playsInline
+        preload="auto"
+        muted={muted}
+        style={{ maxHeight: '100vh' }}
+      />
+
+      {/* Center play/pause icon flash */}
+      <AnimatePresence>
+        {!playing && (
           <motion.div
-            key={index}
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -20, opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="absolute inset-0 flex items-center justify-center p-3"
+            key="pause-icon"
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.3 }}
+            transition={{ duration: 0.25 }}
+            className="absolute w-20 h-20 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center pointer-events-none"
           >
-            <div className="w-full h-full rounded-lg flex items-center justify-between px-4">
-              <div className="flex flex-col gap-1">
-                <span className="inline-flex items-center text-[11px] font-medium text-indigo-200 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-400/40">
-                  🔥 Best edits lane
-                </span>
-                <p className="text-xs text-gray-100 mt-1">
-                  Best Edit Placeholder — plug in your top reels or meme edits.
-                </p>
-                <span className="text-[10px] text-gray-400 mt-1">
-                  Looped preview • tap to open
-                </span>
+            <span className="text-white text-3xl ml-1">▶</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Top bar: back button + title */}
+      <AnimatePresence>
+        {showControls && (
+          <motion.div
+            key="top-bar"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.22 }}
+            className="absolute top-0 left-0 right-0 px-4 pt-12 pb-4 flex items-center gap-3 bg-gradient-to-b from-black/70 to-transparent pointer-events-none"
+          >
+            <motion.button
+              className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white shadow-lg pointer-events-auto"
+              onClick={(e) => { e.stopPropagation(); onClose() }}
+              whileTap={{ scale: 0.88 }}
+            >
+              ✕
+            </motion.button>
+            <span className="text-white font-semibold text-sm tracking-wide">{video.title}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom controls */}
+      <AnimatePresence>
+        {showControls && (
+          <motion.div
+            key="controls"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.22 }}
+            className="absolute bottom-0 left-0 right-0 px-4 pb-8 pt-4 bg-gradient-to-t from-black/80 to-transparent"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Progress bar */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[11px] text-gray-300 font-mono w-9 text-right flex-shrink-0">{fmtTime(currentTime)}</span>
+              <div className="relative flex-1 h-1 group">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={progress}
+                  onChange={handleSeek}
+                  className="best-edits-range absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  aria-label="Video progress"
+                />
+                <div className="w-full h-1 rounded-full bg-white/20">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#E50914] to-[#f97316] transition-all"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-lg transition-all"
+                  style={{ left: `calc(${progress}% - 6px)` }}
+                />
               </div>
-              <motion.div
-                className="w-16 h-16 rounded-2xl border border-indigo-400/50 bg-black/40 flex items-center justify-center text-xl text-indigo-100 shadow-[0_0_32px_rgba(129,140,248,0.8)]"
-                animate={{ scale: [1, 1.08, 1], rotate: [0, -4, 0] }}
-                transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+              <span className="text-[11px] text-gray-400 font-mono w-9 flex-shrink-0">{fmtTime(duration)}</span>
+            </div>
+
+            {/* Buttons row */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {/* Play/Pause */}
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={togglePlay}
+                  className="w-11 h-11 rounded-full bg-gradient-to-br from-[#E50914] to-[#f97316] flex items-center justify-center text-white text-lg shadow-[0_0_22px_rgba(229,9,20,0.7)]"
+                >
+                  {playing ? '⏸' : '▶'}
+                </motion.button>
+                {/* Mute */}
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={toggleMute}
+                  className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white text-sm border border-white/20"
+                >
+                  {muted ? '🔇' : '🔊'}
+                </motion.button>
+              </div>
+              {/* Fullscreen */}
+              <motion.button
+                whileTap={{ scale: 0.85 }}
+                onClick={handleFullscreen}
+                className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white text-sm border border-white/20"
               >
-                ⭐
-              </motion.div>
+                ⛶
+              </motion.button>
             </div>
           </motion.div>
-        </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
 
-        <div className="absolute bottom-3 left-4 right-4 flex justify-between items-center">
-          <div className="flex gap-2">
-            {slides.map((_, i) => (
-              <button
+function BestEditsMobile() {
+  const videos = BEST_EDITS_VIDEOS
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [activeVideo, setActiveVideo] = useState(null)
+  const dragX = useRef(0)
+  const containerRef = useRef(null)
+
+  const goTo = (idx) => {
+    const clamped = Math.max(0, Math.min(videos.length - 1, idx))
+    setCurrentIndex(clamped)
+  }
+
+  const handleDragEnd = (_, info) => {
+    const threshold = 60
+    if (info.offset.x < -threshold) goTo(currentIndex + 1)
+    else if (info.offset.x > threshold) goTo(currentIndex - 1)
+  }
+
+  return (
+    <>
+      {/* Custom video player overlay */}
+      <AnimatePresence>
+        {activeVideo && (
+          <VideoPlayerOverlay
+            key={activeVideo.id}
+            video={activeVideo}
+            onClose={() => setActiveVideo(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <div className="px-4 mt-4">
+        {/* Section header */}
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-200">Best Edits</h3>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: '100%' }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+              className="h-[2px] mt-1 rounded-full bg-gradient-to-r from-[#E50914] via-[#f97316] to-transparent"
+            />
+          </div>
+          <span className="text-[10px] text-gray-500 uppercase tracking-widest">{currentIndex + 1} / {videos.length}</span>
+        </div>
+
+        {/* Slider area */}
+        <div ref={containerRef} className="relative select-none">
+          {/* Left arrow */}
+          {currentIndex > 0 && (
+            <motion.button
+              key="arrow-left"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0 }}
+              onClick={() => goTo(currentIndex - 1)}
+              className="absolute left-1 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/70 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white text-sm shadow-xl"
+              whileTap={{ scale: 0.88 }}
+            >
+              ‹
+            </motion.button>
+          )}
+          {/* Right arrow */}
+          {currentIndex < videos.length - 1 && (
+            <motion.button
+              key="arrow-right"
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0 }}
+              onClick={() => goTo(currentIndex + 1)}
+              className="absolute right-1 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/70 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white text-sm shadow-xl"
+              whileTap={{ scale: 0.88 }}
+            >
+              ›
+            </motion.button>
+          )}
+
+          {/* Cards track */}
+          <div className="overflow-hidden rounded-xl">
+            <AnimatePresence initial={false} mode="popLayout">
+              <motion.div
+                key={currentIndex}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.18}
+                onDragEnd={handleDragEnd}
+                initial={{ opacity: 0, x: 80, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -80, scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 32, mass: 0.9 }}
+                className="cursor-grab active:cursor-grabbing"
+              >
+                <VideoCard
+                  video={videos[currentIndex]}
+                  onPlay={() => setActiveVideo(videos[currentIndex])}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Pagination dots */}
+          <div className="flex items-center justify-center gap-2 mt-3">
+            {videos.map((_, i) => (
+              <motion.button
                 key={i}
-                onClick={() => setIndex(i)}
-                className={`w-2 h-2 rounded-full ${i === index ? 'bg-[#E50914]' : 'bg-gray-600'}`}
+                onClick={() => goTo(i)}
+                animate={{
+                  width: i === currentIndex ? 20 : 6,
+                  backgroundColor: i === currentIndex ? '#E50914' : '#4b5563',
+                }}
+                transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+                className="h-[6px] rounded-full"
+                aria-label={`Go to slide ${i + 1}`}
               />
             ))}
           </div>
-          <div className="text-xs text-gray-400">Autoplay</div>
         </div>
       </div>
-    </div>
+    </>
+  )
+}
+
+function VideoCard({ video, onPlay }) {
+  const thumbRef = useRef(null)
+  const [thumbReady, setThumbReady] = useState(false)
+
+  return (
+    <motion.div
+      className="relative w-full rounded-xl overflow-hidden bg-[#0a0a0a] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.85)]"
+      style={{ aspectRatio: '16/9' }}
+      whileTap={{ scale: 0.985 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+    >
+      {/* Hidden video for thumbnail frame */}
+      <video
+        ref={thumbRef}
+        src={video.src}
+        preload="metadata"
+        muted
+        playsInline
+        className={`w-full h-full object-cover transition-opacity duration-500 ${thumbReady ? 'opacity-100' : 'opacity-0'}`}
+        onLoadedData={() => setThumbReady(true)}
+      />
+
+      {/* Gradient overlays */}
+      {!thumbReady && (
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#020617] flex items-center justify-center">
+          <motion.div
+            className="w-12 h-12 rounded-full border-2 border-[#E50914]/40 border-t-[#E50914]"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
+
+      {/* Title badge */}
+      <div className="absolute top-3 left-3">
+        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-[#E50914]/90 px-2 py-0.5 rounded-full shadow-lg">
+          🔥 Best Edit
+        </span>
+      </div>
+
+      {/* Play button */}
+      <motion.button
+        onClick={onPlay}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        transition={{ type: 'spring', stiffness: 350, damping: 22 }}
+        className="absolute inset-0 flex items-center justify-center"
+        aria-label={`Play ${video.title}`}
+      >
+        <motion.div
+          className="w-16 h-16 rounded-full bg-gradient-to-br from-[#E50914] via-[#f97316] to-[#fde68a] flex items-center justify-center shadow-[0_0_32px_rgba(229,9,20,0.75)]"
+          animate={{
+            boxShadow: [
+              '0 0 24px rgba(229,9,20,0.6)',
+              '0 0 44px rgba(249,115,22,0.8)',
+              '0 0 24px rgba(229,9,20,0.6)',
+            ]
+          }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <span className="text-black text-2xl font-black ml-1">▶</span>
+        </motion.div>
+      </motion.button>
+
+      {/* Bottom title */}
+      <div className="absolute bottom-3 left-3 right-3">
+        <p className="text-white text-xs font-semibold truncate drop-shadow-lg">{video.title}</p>
+        <p className="text-gray-400 text-[10px] mt-0.5">Tap to watch</p>
+      </div>
+    </motion.div>
   )
 }
 
@@ -1582,7 +1943,7 @@ function FullCategoriesPage({ onBack, onSelectCategory }) {
       {/* Top tabs */}
       <div className="flex items-center gap-6 mb-5 text-[11px] font-semibold uppercase tracking-[0.2em]">
         <div className="relative pb-1 text-teal-300">
-          <span>VIDEO CLIPS</span>
+          <span>TEMPLATES</span>
           <div className="absolute left-0 right-0 -bottom-0.5 h-[2px] rounded-full bg-teal-400" />
         </div>
         <div className="text-gray-500 font-medium tracking-wide">AUDIO MEMES</div>
